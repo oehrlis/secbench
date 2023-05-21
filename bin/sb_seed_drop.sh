@@ -22,8 +22,6 @@ DEFAULT_TOOLS="sqlplus"
 # source genric environment variables and functions
 export SB_SCRIPT_NAME=$(basename ${BASH_SOURCE[0]})
 export SB_BIN_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-export SB_LOG_DIR="$(dirname ${SB_BIN_DIR})/log"
-export SB_SQL_DIR="$(dirname ${SB_BIN_DIR})/sql"
 export SB_ETC_DIR="$(dirname ${SB_BIN_DIR})/etc"
 # define logfile and logging
 export LOG_BASE=${LOG_BASE:-"$SCRIPT_BIN_DIR"}  # Use script directory as default logbase
@@ -129,9 +127,6 @@ fi
 # Default values
 export SB_SEED_DB=${SB_SEED_DB:-""}
 
-# Default values
-export SB_SEED_DB=${SB_SEED_DB:-""}
-
 # check for Service and Arguments
 if [ -z "$SB_SEED_DB" ] && [ $# -ne 0 ]; then
     if [[ "$1" =~ ^-.*  ]]; then
@@ -154,11 +149,7 @@ set +o errexit                              # temporary disable errexit
 if pdb_exists; then
     echo_warn "INFO : Drop PDB $SB_SEED_DB including datafiles"
     if force_enabled; then
-        if ! dryrun_enabled; then
-            drop_pdb $SB_SEED_DB
-        else
-            echo "INFO : Dry run enabled, skip drop of PDB $SB_SEED_DB"
-        fi
+        drop_pdb $SB_SEED_DB
     else
         while true; do
             read -p "INFO : Do you realy want to remove $SB_SEED_DB? (y/n): " yn
@@ -170,11 +161,7 @@ if pdb_exists; then
                 * )     echo_warn "WARN : invalid response";;
             esac
         done
-        if ! dryrun_enabled; then
             drop_pdb $SB_SEED_DB
-        else
-            echo "INFO : Dry run enabled, skip drop of PDB $SB_SEED_DB"
-        fi
     fi
 else
     clean_quit 41 $SB_SEED_DB

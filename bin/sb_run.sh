@@ -14,22 +14,17 @@
 #              at http://www.apache.org/licenses/
 # ------------------------------------------------------------------------------
 # - Customization --------------------------------------------------------------
-DEFAULT_SEED_DB="sbseed"            # default name for the SecBench seed database
-DEFAULT_SECBENCH_DB="sbdb00"        # default name for the SecBench seed database
+DEFAULT_SB_SEED_DB="sbseed"         # default name for the SecBench seed database
+DEFAULT_SB_SECBENCH_DB="sbrun"      # default name for the SecBench seed database
 DEFAULT_SB_PASSWORD=""              # default value for the default password
+DEFAULT_SB_KEEP_PDB="FALSE"         # default value for flag to keep pdbs of each test
 # - End of Customization -------------------------------------------------------
 
 # - Default Values -------------------------------------------------------------
 # source genric environment variables and functions
 export SB_SCRIPT_NAME=$(basename ${BASH_SOURCE[0]})
 export SB_BIN_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-export SB_LOG_DIR="$(dirname ${SB_BIN_DIR})/log"
-export SB_SQL_DIR="$(dirname ${SB_BIN_DIR})/sql"
 export SB_ETC_DIR="$(dirname ${SB_BIN_DIR})/etc"
-export SB_OUT_DIR="$(dirname ${SB_BIN_DIR})/output"
-export SB_CONF_DIR="$(dirname ${SB_BIN_DIR})/conf"
-export SB_SEED_DB=${1:-$DEFAULT_SEED_DB}
-export SECBENCH_DB=${2:-$DEFAULT_SECBENCH_DB}
 
 # define logfile and logging
 export LOG_BASE=${LOG_BASE:-"$SCRIPT_BIN_DIR"}  # Use script directory as default logbase
@@ -44,7 +39,6 @@ readonly LOGFILE="$LOG_BASE/$(basename $SB_SCRIPT_NAME .sh)_$TIMESTAMP.log"
 # define a few constants / string variables
 SB_SETUP="setup.sh"
 SB_REMOVE="remove.sh"
-SB_KEEP_PDB="FALSE"
 # - EOF Default Values ---------------------------------------------------------
 
 # todo: Variables to check
@@ -65,15 +59,25 @@ function Usage() {
     error_value=${2:-""}            # default error message
     cat << EOI
 
-  Usage: ${SB_SCRIPT_NAME} [options]
+  Usage: ${SB_SCRIPT_NAME} [options] [benchmark options] [benchmark]
 
   where:
-    services	        Comma separated list of Oracle Net Service Names to search
+    benchmark	        Comma separated list of security benchmarks.
 
   Common Options:
-    -m                  Usage this message
+    -h                  Usage this message
     -v                  Enable verbose mode (default \$SB_VERBOSE=${SB_VERBOSE})
     -d                  Enable debug mode (default \$SB_DEBUG=${SB_DEBUG})
+ 
+  benchmark options:
+    -B <BENCHMARK>      Name of the benchmark to run (mandatory). Can be a comma
+                        separated list of security benchmarks. Whereby each benchmark
+                        must have valid a regular setup.sh as well remove.sh scrip
+                        it the benchmark folder $SB_CONF_DIR
+    -c <CONFIG FILE>    Name of the configuration file to be loaded beside the default
+                        configuration files.
+    -n                  Dry run mode. Show what would be done but do not actually do it
+    -F                  Force mode to delete the seed PDB
 
   Configuration file:
     The script does load configuration files to define default values as an
@@ -130,21 +134,38 @@ check_tools             # check if we do have the required tools available
 dump_runtime_config     # dump current tool specific environment in debug mode
 
 # get options
-while getopts hvdE: CurOpt; do
+while getopts hvdknB:E: CurOpt; do
     case ${CurOpt} in
         h) Usage 0;;
         v) TVDLDAP_VERBOSE="TRUE" ;;
         d) TVDLDAP_DEBUG="TRUE" ;;
+        n) SB_DRYRUN="TRUE";;
+        B) SB_USE_CASES=$(echo $OPTARG | tr "," " ");;
+        k) SB_KEEP_PDB="TRUE";;
         E) clean_quit "${OPTARG}";;
         *) Usage 2 $*;;
     esac
 done
 
+# Default values
+export SB_KEEP_PDB=${SB_KEEP_PDB:-$DEFAULT_SB_KEEP_PDB}
+export SB_SEED_DB=${SB_SEED_DB:-$DEFAULT_SB_SEED_DB}
+export SECBENCH_DB=${SECBENCH_DB:-$DEFAULT_SB_SECBENCH_DB}
+export SB_PASSWORD=${SB_PASSWORD:-$DEFAULT_SB_PASSWORD}
+export SB_DBA_PASSWORD=${SB_DBA_PASSWORD:-$DEFAULT_SB_DBA_PASSWORD}
+export SB_DBA_USER=${SB_DBA_USER:-$DEFAULT_SB_DBA_USER}
+export SB_USER=${SB_USER:-$DEFAULT_SB_USER}
+export SB_SCALE=${SB_SCALE:-$DEFAULT_SB_SCALE}
+
+# convert to upper case
+export SB_SEED_DB=${SB_SEED_DB^^}
+export SECBENCH_DB=${SECBENCH_DB^^}
+
 # get secbench password
 if [ -z "$SB_PASSWORD" ]; then
-    if [ -f "$SB_ETC_DIR/.default_secbench_password.txt" ]; then
-        echo "INFO : found pwd file $SB_ETC_DIR/.default_secbench_password.txt"
-        SB_PASSWORD=$(cat $SB_ETC_DIR/.default_secbench_password.txt)
+    if [ -f "$SB_ETC_DIR/.${SB_BASE_NAME}_password.txt" ]; then
+        echo "INFO : found pwd file $SB_ETC_DIR/.${SB_BASE_NAME}_password.txt"
+        SB_PASSWORD=$(cat $SB_ETC_DIR/.${SB_BASE_NAME}_password.txt)
     else
         clean_quit 28 "SOE Schema"
     fi
@@ -160,12 +181,27 @@ if [ -z "$SB_OS_PWD" ]; then
     fi
 fi
 
+
+
 # create output folder
 mkdir -p $SB_OUTPUT_DIR
+
 # - EOF Initialization ---------------------------------------------------------
 
 # - Main -----------------------------------------------------------------------
+
+set +o errexit                              # temporary disable errexit
 echo "INFO : Run SecBench on $ORACLE_SID in $SECBENCH_DB"
+echo "INFO : Using the following configuration values:"
+echo "INFO : SB_SEED_DB........ : $SB_SEED_DB"
+echo "INFO : SB_USE_CASES...... : $SB_USE_CASES"
+echo "INFO : SB_INTERVAL....... : $SB_INTERVAL"
+echo "INFO : SB_KEEP_PDB....... : $SB_KEEP_PDB"
+echo "INFO : SB_DBA_USER....... : $SB_DBA_USER"
+echo "INFO : SB_DBA_PASSWORD... : $SB_DBA_PASSWORD"
+echo "INFO : SB_USER........... : $SB_USER"
+echo "INFO : SB_PASSWORD....... : $SB_PASSWORD"
+echo "INFO : SB_SCALE.......... : $SB_SCALE"
 
 for bench in $SB_USE_CASES; do
     echo "INFO : [$bench] ======================================================================="
@@ -176,11 +212,11 @@ for bench in $SB_USE_CASES; do
         if [ ${SB_KEEP_PDB} == "TRUE" ]; then
             SECBENCH_DB="SB_${bench^^}"
             echo "INFO : create SecBench PDB $SECBENCH_DB from $SB_SEED_DB"
-            echo create_pdb $SB_SEED_DB $SECBENCH_DB
+            create_pdb $SB_SEED_DB $SECBENCH_DB
         else
             echo "INFO : recreate SecBench PDB $SECBENCH_DB from $SB_SEED_DB"
-            echo drop_pdb $SECBENCH_DB
-            echo create_pdb $SB_SEED_DB $SECBENCH_DB
+            drop_pdb $SECBENCH_DB
+            create_pdb $SB_SEED_DB $SECBENCH_DB
         fi
 
         echo "INFO : prepare and setup configuration for $bench"
@@ -189,16 +225,16 @@ for bench in $SB_USE_CASES; do
         for uc in $SB_INTERVAL; do
             echo "INFO : [$bench] - $uc ------------------------------------------------------------------------"
             echo "INFO : [$bench] create AWR snapshot in $SECBENCH_DB"
-            echo create_awr_snapshot $SECBENCH_DB
+            create_awr_snapshot $SECBENCH_DB
 
             echo "INFO : [$bench] run charbench for $uc concurrent users"
-            echo run_charbench $uc
+            run_charbench $uc
             
             echo "INFO : [$bench] create AWR snapshot in $SECBENCH_DB"
-            echo create_awr_snapshot $SECBENCH_DB
+            create_awr_snapshot $SECBENCH_DB
 
             echo "INFO : [$bench] create AWR report"
-            echo create_awr_report
+            create_awr_report
         done
 
         echo "INFO : remove configuration for $bench"

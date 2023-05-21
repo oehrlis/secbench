@@ -38,7 +38,10 @@ TEMPFILE=${TEMPFILE:-""}
 LOCAL_SCRIPT_NAME=$(basename ${BASH_SOURCE[0]})
 export SB_BIN_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 export SB_LOG_DIR="$(dirname ${SB_BIN_DIR})/log"
-export SB_ETC_DIR="$(dirname ${SB_BIN_DIR})/etc"
+export SB_SQL_DIR="$(dirname ${SB_BIN_DIR})/sql"
+export SB_OUT_DIR="$(dirname ${SB_BIN_DIR})/output"
+export SB_CONF_DIR="$(dirname ${SB_BIN_DIR})/conf"
+export SB_OUTPUT_DIR="$SB_OUT_DIR/$(basename ${SB_SCRIPT_NAME} .sh)_$TIMESTAMP"
 export SB_BASE=$(dirname ${SB_BIN_DIR})
 export SB_BASE_NAME="secbench"
 export SB_CONFIG_FILES=""
@@ -238,6 +241,30 @@ function get_list_of_config() {
 }
 
 # ------------------------------------------------------------------------------
+# Function...: get_db_host
+# Purpose....: get the host name / ip of the database server
+# ------------------------------------------------------------------------------
+function get_db_host() {
+    echo $(lsnrctl status|grep -iv xdb|grep -i host |sed 's/.*(HOST=\(.*\))(.*/\1/')
+}
+
+# ------------------------------------------------------------------------------
+# Function...: get_db_port
+# Purpose....: get the port database server
+# ------------------------------------------------------------------------------
+function get_db_port() {
+    echo $(lsnrctl status|grep -iv xdb|grep -i host |sed 's/.*(PORT=\([0-9]*\).*/\1/')
+}
+
+# ------------------------------------------------------------------------------
+# Function...: get_db_service
+# Purpose....: get the service name of the PDB
+# ------------------------------------------------------------------------------
+function get_db_service() {
+    pdb=${1:-$SB_SEED_DB}
+    echo $(lsnrctl status|grep -iv xdb|grep -i $pdb|sed 's/.*"\(.*\)".*/\1/')
+}
+# ------------------------------------------------------------------------------
 # Function...: update_path
 # Purpose....: multipurpose function to manipulate PATH variable
 # Usage......: 
@@ -357,16 +384,20 @@ function rotate_logfiles() {
 # Purpose....: Display Usage and exit script
 # ------------------------------------------------------------------------------
 function create_awr_snapshot() {
-    PDB=${1:-$SB_SEED_DB}
-    ${ORACLE_HOME}/bin/sqlplus -S -L /nolog <<EOFSQL
-        WHENEVER OSERROR EXIT 9;
-        WHENEVER SQLERROR EXIT SQL.SQLCODE;
-        CONNECT / AS SYSDBA
-        ALTER SESSION SET CONTAINER=$PDB;
-        SELECT to_char(sysdate, 'YYYY-MM-DD HH24:MI') AS tstamp,
-            dbms_workload_repository.create_snapshot() AS snap_id FROM dual;
+    pdb=${1:-$SB_SEED_DB}
+    if ! dryrun_enabled; then
+        ${ORACLE_HOME}/bin/sqlplus -S -L /nolog <<EOFSQL
+            WHENEVER OSERROR EXIT 9;
+            WHENEVER SQLERROR EXIT SQL.SQLCODE;
+            CONNECT / AS SYSDBA
+            ALTER SESSION SET CONTAINER=$pdb;
+            SELECT to_char(sysdate, 'YYYY-MM-DD HH24:MI') AS tstamp,
+                dbms_workload_repository.create_snapshot() AS snap_id FROM dual;
 EOFSQL
-    if [ $? != 0 ]; then clean_quit 33 "sqlplus AWR snapshot"; fi 
+        if [ $? != 0 ]; then clean_quit 33 "sqlplus AWR snapshot"; fi 
+    else
+        echo "INFO : Dry run enabled, skip create AWR snapshot for PDB $pdb"
+    fi
 }
 
 # ------------------------------------------------------------------------------
@@ -375,12 +406,16 @@ EOFSQL
 # ------------------------------------------------------------------------------
 function create_awr_report() {
     pdb=${1:-$SECBENCH_DB}
-    ${ORACLE_HOME}/bin/sqlplus -S -L /nolog <<EOFSQL
-        WHENEVER OSERROR EXIT 9;
-        WHENEVER SQLERROR EXIT SQL.SQLCODE;
-        CONNECT / AS SYSDBA
+    if ! dryrun_enabled; then
+        ${ORACLE_HOME}/bin/sqlplus -S -L /nolog <<EOFSQL
+            WHENEVER OSERROR EXIT 9;
+            WHENEVER SQLERROR EXIT SQL.SQLCODE;
+            CONNECT / AS SYSDBA
 EOFSQL
-    if [ $? != 0 ]; then clean_quit 33 "sqlplus AWR report "; fi 
+        if [ $? != 0 ]; then clean_quit 33 "sqlplus AWR report "; fi 
+    else
+        echo "INFO : Dry run enabled, skip create AWR report for PDB $pdb"
+    fi
 }
 
 # ------------------------------------------------------------------------------
@@ -390,14 +425,18 @@ EOFSQL
 function drop_pdb() {
     SECBENCH_DB=${SECBENCH_DB:-$SB_SEED_DB}
     target=${1:-$SECBENCH_DB}
-    ${ORACLE_HOME}/bin/sqlplus -S -L /nolog <<EOFSQL
-        WHENEVER OSERROR EXIT 9;
-        WHENEVER SQLERROR EXIT SQL.SQLCODE;
-        CONNECT / AS SYSDBA
-        SPOOL $SB_LOG_DIR/sb_drop_${target}_$(date "+%Y.%m.%d_%H%M%S").log
-        @$SB_SQL_DIR/sb_secbench_drop_pdb.sql $target
+    if ! dryrun_enabled; then
+        ${ORACLE_HOME}/bin/sqlplus -S -L /nolog <<EOFSQL
+            WHENEVER OSERROR EXIT 9;
+            WHENEVER SQLERROR EXIT SQL.SQLCODE;
+            CONNECT / AS SYSDBA
+            SPOOL $SB_LOG_DIR/sb_drop_${target}_$(date "+%Y.%m.%d_%H%M%S").log
+            @$SB_SQL_DIR/sb_secbench_drop_pdb.sql $target
 EOFSQL
-    if [ $? != 0 ]; then clean_quit 33 "sqlplus clone $source to $target "; fi 
+        if [ $? != 0 ]; then clean_quit 33 "sqlplus clone $source to $target "; fi 
+    else
+        echo "INFO : Dry run enabled, skip drop of PDB $target"
+    fi
 }
 
 # ------------------------------------------------------------------------------
@@ -430,14 +469,18 @@ EOFSQL
 function create_pdb() {
     source=${1:-$SB_SEED_DB}
     target=${2:-$SECBENCH_DB}
-    ${ORACLE_HOME}/bin/sqlplus -S -L /nolog <<EOFSQL
-        WHENEVER OSERROR EXIT 9;
-        WHENEVER SQLERROR EXIT SQL.SQLCODE;
-        CONNECT / AS SYSDBA
-        SPOOL $SB_LOG_DIR/sb_sbseed_drop_$(date "+%Y.%m.%d_%H%M%S").log
-        @$SB_SQL_DIR/sb_secbench_create_pdb.sql $source $target 
+    if ! dryrun_enabled; then
+        ${ORACLE_HOME}/bin/sqlplus -S -L /nolog <<EOFSQL
+            WHENEVER OSERROR EXIT 9;
+            WHENEVER SQLERROR EXIT SQL.SQLCODE;
+            CONNECT / AS SYSDBA
+            SPOOL $SB_LOG_DIR/sb_sbseed_drop_$(date "+%Y.%m.%d_%H%M%S").log
+            @$SB_SQL_DIR/sb_secbench_create_pdb.sql $source $target 
 EOFSQL
-    if [ $? != 0 ]; then clean_quit 33 "sqlplus clone $source to $target "; fi 
+        if [ $? != 0 ]; then clean_quit 33 "sqlplus clone $source to $target "; fi
+    else
+        echo "INFO : Dry run enabled, skip create PDB $target"
+    fi
 }
 
 # ------------------------------------------------------------------------------
@@ -445,7 +488,7 @@ EOFSQL
 # Purpose....: run charbench in SecBench PDB
 # ------------------------------------------------------------------------------
 function run_charbench() {
-    bench=${1:-"regular"}
+    benchmark=${1:-"regular"}
     users=${2:-10}
     DBHOST=$(lsnrctl status|grep -iv xdb|grep -i host |sed 's/.*(HOST=\(.*\))(.*/\1/')
     DBPORT=$(lsnrctl status|grep -iv xdb|grep -i host |sed 's/.*(PORT=\([0-9]*\).*/\1/')
@@ -453,14 +496,17 @@ function run_charbench() {
     # -dbap <password>  the password of admin user (used for collecting DB Stats)
     # -dbau <username>  the username of admin user (used for collecting DB stats)
     # -com <comment>    specify comment for this benchmark run (in double quotes)
-
-    charbench -cs //$DBHOST:$DBPORT/$DBSERVICE -u $SB_USER -p $SB_PASSWORD \
-        -rt $SB_RUNTIME -min $SB_MIN -max $SB_MAX -uc ${users} \
-        -cpuloc $HOSTNAME -cpuuser $SB_OS_USER -cpupass $SB_OS_PWD \
-        -v $SB_OPTIONS -c $SB_SWINGBENCH_CONF \
-        -r $SB_OUTPUT_DIR/soe-${bench}-${users}.xml > $SB_OUTPUT_DIR/soe-${bench}-${users}.log
+    if ! dryrun_enabled; then
+        charbench -cs //$DBHOST:$DBPORT/$DBSERVICE -u $SB_USER -p $SB_PASSWORD \
+            -rt $SB_RUNTIME -min $SB_MIN -max $SB_MAX -uc ${users} \
+            -cpuloc $HOSTNAME -cpuuser $SB_OS_USER -cpupass $SB_OS_PWD \
+            -v $SB_OPTIONS -c $SB_SWINGBENCH_CONF \
+            -r $SB_OUTPUT_DIR/soe-${benchmark}-${users}.xml > $SB_OUTPUT_DIR/soe-${benchmark}-${users}.log
             
-    if [ $? != 0 ]; then clean_quit 33 "charbench"; fi 
+        if [ $? != 0 ]; then clean_quit 33 "charbench"; fi
+    else
+        echo "INFO : Dry run enabled, skip to run charbench PDB $pdb"
+    fi
 }
 # - EOF Functions --------------------------------------------------------------
 
