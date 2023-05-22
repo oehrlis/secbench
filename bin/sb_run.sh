@@ -14,8 +14,8 @@
 #              at http://www.apache.org/licenses/
 # ------------------------------------------------------------------------------
 # - Customization --------------------------------------------------------------
-DEFAULT_SB_SEED_DB="sbseed"         # default name for the SecBench seed database
-DEFAULT_SB_SECBENCH_DB="sbrun"      # default name for the SecBench seed database
+DEFAULT_SB_SEED_DB="sbpdb_seed"     # default name for the SecBench seed database
+DEFAULT_SB_SECBENCH_DB="sbpdb_run"  # default name for the SecBench PDB
 DEFAULT_SB_PASSWORD=""              # default value for the default password
 DEFAULT_SB_KEEP_PDB="FALSE"         # default value for flag to keep pdbs of each test
 # - End of Customization -------------------------------------------------------
@@ -25,9 +25,10 @@ DEFAULT_SB_KEEP_PDB="FALSE"         # default value for flag to keep pdbs of eac
 export SB_SCRIPT_NAME=$(basename ${BASH_SOURCE[0]})
 export SB_BIN_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 export SB_ETC_DIR="$(dirname ${SB_BIN_DIR})/etc"
+export SB_LOG_DIR="$(dirname ${SB_BIN_DIR})/log"
 
 # define logfile and logging
-export LOG_BASE=${LOG_BASE:-"$SCRIPT_BIN_DIR"}  # Use script directory as default logbase
+export LOG_BASE=${LOG_BASE:-"$SB_LOG_DIR"}  # Use script directory as default logbase
 # Define Logfile but first reset LOG_BASE if directory does not exists
 if [ ! -d ${LOG_BASE} ] || [ ! -w ${LOG_BASE} ] ; then
     echo "INFO : set LOG_BASE to /tmp"
@@ -44,7 +45,7 @@ SB_REMOVE="remove.sh"
 # todo: Variables to check
 # ORACLE_HOME
 # SB_SEED_DB
-# SECBENCH_DB
+# SB_SECBENCH_DB
 # whole charbench variables...
 # todo: check oracle home
 
@@ -150,7 +151,7 @@ done
 # Default values
 export SB_KEEP_PDB=${SB_KEEP_PDB:-$DEFAULT_SB_KEEP_PDB}
 export SB_SEED_DB=${SB_SEED_DB:-$DEFAULT_SB_SEED_DB}
-export SECBENCH_DB=${SECBENCH_DB:-$DEFAULT_SB_SECBENCH_DB}
+export SB_SECBENCH_DB=${SB_SECBENCH_DB:-$DEFAULT_SB_SECBENCH_DB}
 export SB_PASSWORD=${SB_PASSWORD:-$DEFAULT_SB_PASSWORD}
 export SB_DBA_PASSWORD=${SB_DBA_PASSWORD:-$DEFAULT_SB_DBA_PASSWORD}
 export SB_DBA_USER=${SB_DBA_USER:-$DEFAULT_SB_DBA_USER}
@@ -159,7 +160,7 @@ export SB_SCALE=${SB_SCALE:-$DEFAULT_SB_SCALE}
 
 # convert to upper case
 export SB_SEED_DB=${SB_SEED_DB^^}
-export SECBENCH_DB=${SECBENCH_DB^^}
+export SB_SECBENCH_DB=${SB_SECBENCH_DB^^}
 
 # get secbench password
 if [ -z "$SB_PASSWORD" ]; then
@@ -191,7 +192,7 @@ mkdir -p $SB_OUTPUT_DIR
 # - Main -----------------------------------------------------------------------
 
 set +o errexit                              # temporary disable errexit
-echo "INFO : Run SecBench on $ORACLE_SID in $SECBENCH_DB"
+echo "INFO : Run SecBench on $ORACLE_SID in $SB_SECBENCH_DB"
 echo "INFO : Using the following configuration values:"
 echo "INFO : SB_SEED_DB........ : $SB_SEED_DB"
 echo "INFO : SB_USE_CASES...... : $SB_USE_CASES"
@@ -210,35 +211,47 @@ for bench in $SB_USE_CASES; do
 
         
         if [ ${SB_KEEP_PDB} == "TRUE" ]; then
-            SECBENCH_DB="SB_${bench^^}"
-            echo "INFO : create SecBench PDB $SECBENCH_DB from $SB_SEED_DB"
-            create_pdb $SB_SEED_DB $SECBENCH_DB
+            SB_SECBENCH_DB="SBPDB_${bench^^}"
+            echo "INFO : create SecBench PDB $SB_SECBENCH_DB from $SB_SEED_DB"
+            create_pdb $SB_SEED_DB $SB_SECBENCH_DB
         else
-            echo "INFO : recreate SecBench PDB $SECBENCH_DB from $SB_SEED_DB"
-            drop_pdb $SECBENCH_DB
-            create_pdb $SB_SEED_DB $SECBENCH_DB
+            echo "INFO : recreate SecBench PDB $SB_SECBENCH_DB from $SB_SEED_DB"
+            drop_pdb $SB_SECBENCH_DB
+            create_pdb $SB_SEED_DB $SB_SECBENCH_DB
         fi
 
-        echo "INFO : prepare and setup configuration for $bench"
-        $SB_CONF_DIR/$bench/$SB_SETUP
+        if pdb_exists $SB_SECBENCH_DB; then
+            echo "INFO : prepare and setup configuration for $bench"
+            $SB_CONF_DIR/$bench/$SB_SETUP $SB_SECBENCH_DB $SB_OUTPUT_DIR
+        elif dryrun_enabled; then
+            echo "INFO : Dry run enabled, skip $SB_SETUP for $bench in $SB_SECBENCH_DB"
+        else
+            clean_quit 40 $SB_SECBENCH_DB
+        fi
 
         for uc in $SB_INTERVAL; do
             echo "INFO : [$bench] - $uc ------------------------------------------------------------------------"
-            echo "INFO : [$bench] create AWR snapshot in $SECBENCH_DB"
-            create_awr_snapshot $SECBENCH_DB
+            echo "INFO : [$bench] create AWR snapshot in $SB_SECBENCH_DB"
+            create_awr_snapshot $SB_SECBENCH_DB
 
-            echo "INFO : [$bench] run charbench for $uc concurrent users"
-            run_charbench $uc
+            echo "INFO : [$bench] run charbench for $SB_RUNTIME with $uc concurrent users"
+            run_charbench $bench $uc
             
-            echo "INFO : [$bench] create AWR snapshot in $SECBENCH_DB"
-            create_awr_snapshot $SECBENCH_DB
+            echo "INFO : [$bench] create AWR snapshot in $SB_SECBENCH_DB"
+            create_awr_snapshot $SB_SECBENCH_DB
 
             echo "INFO : [$bench] create AWR report"
             create_awr_report
         done
 
-        echo "INFO : remove configuration for $bench"
-        $SB_CONF_DIR/$bench/$SB_REMOVE
+        if pdb_exists $SB_SECBENCH_DB; then
+            echo "INFO : remove configuration for $bench"
+            $SB_CONF_DIR/$bench/$SB_REMOVE $SB_SECBENCH_DB $SB_OUTPUT_DIR
+        elif dryrun_enabled; then
+            echo "INFO : Dry run enabled, skip $SB_REMOVE for $bench in $SB_SECBENCH_DB"
+        else
+            clean_quit 40 $SB_SECBENCH_DB
+        fi
     else
         echo_warn "WARN : can not find benchmark config folder "
         echo_warn "WARN : skip benchmark $bench"

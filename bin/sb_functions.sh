@@ -54,10 +54,11 @@ export HOME=${HOME:-~}
 export SB_DRYRUN=${SB_DRYRUN:-"FALSE"}
 export SB_FORCE=${SB_FORCE:-"FALSE"}
 # Define the color for the output 
-export SB_INFO="\e[96m%b\e[0m" 
-export SB_SUCCESS="\e[92m%b\e[0m" 
-export SB_WARNING="\e[93m%b\e[0m" 
-export SB_ERROR="\e[91m%b\e[0m" 
+export SB_ANSI_INFO="\e[96m%b\e[0m" 
+export SB_ANSI_SUCCESS="\e[92m%b\e[0m" 
+export SB_ANSI_WARNING="\e[93m%b\e[0m" 
+export SB_ANSI_DEBUG="\e[94m%b\e[0m" 
+export SB_ANSI_ERROR="\e[91m%b\e[0m" 
 # - EOF Environment Variables --------------------------------------------------
 
 # - Functions ------------------------------------------------------------------
@@ -115,7 +116,7 @@ function check_tools() {
 function echo_debug () {
     text=${1:-""}
     if [ "${SB_DEBUG^^}" == "TRUE" ]; then
-        printf $SB_WARNING'\n' "$text" 1>&2
+        printf $SB_ANSI_DEBUG'\n' "$text" 1>&2
     fi
 }
 
@@ -125,7 +126,7 @@ function echo_debug () {
 # ------------------------------------------------------------------------------
 function echo_warn () {
     text=${1:-""}
-    printf $SB_WARNING'\n' "$text" 1>&2
+    printf $SB_ANSI_WARNING'\n' "$text" 1>&2
 }
 
 # ------------------------------------------------------------------------------
@@ -167,29 +168,29 @@ function clean_quit() {
 
     case ${error} in
 
-        0)  printf $SB_SUCCESS'\n' "INFO : Successfully finish ${SB_SCRIPT_NAME}";;
-        1)  printf $SB_ERROR'\n' "ERROR: Exit Code ${error}. Wrong amount of arguments. See usage for correct one." ;;
-        2)  printf $SB_ERROR'\n' "ERROR: Exit Code ${error}. Wrong arguments (${error_value}). See usage for correct one." >&2;;
-        3)  printf $SB_ERROR'\n' "ERROR: Exit Code ${error}. Missing mandatory argument (${error_value}). See usage ..." >&2;;
-        5)  printf $SB_ERROR'\n' "ERROR: Exit Code ${error}. Missing common function file (${error_value}) to source." >&2;;
-        10) printf $SB_ERROR'\n' "ERROR: Exit Code ${error}. Command ${error_value} isn't installed/available on this system..." >&2;;
-        20) printf $SB_ERROR'\n' "ERROR: Exit Code ${error}. File ${error_value} already exists..." >&2;;
-        21) printf $SB_ERROR'\n' "ERROR: Exit Code ${error}. Directory ${error_value} is not writeable..." >&2;;
-        22) printf $SB_ERROR'\n' "ERROR: Exit Code ${error}. Can not read file ${error_value} ..." >&2;;
-        23) printf $SB_ERROR'\n' "ERROR: Exit Code ${error}. Can not write file ${error_value} ..." >&2;;
-        24) printf $SB_ERROR'\n' "ERROR: Exit Code ${error}. Can not create skip/reject files in ${error_value} ..." >&2;;
-        25) printf $SB_ERROR'\n' "ERROR: Exit Code ${error}. Can not read file password file ${error_value} ..." >&2;;
-        26) printf $SB_ERROR'\n' "ERROR: Exit Code ${error}. Can not write tempfile file ${error_value} ..." >&2;;
-        27) printf $SB_ERROR'\n' "ERROR: Exit Code ${error}. Invalid password file ${error_value} ..." >&2;;
-        28) printf $SB_ERROR'\n' "ERROR: Exit Code ${error}. Missing password for ${error_value:-'n/a'} ..." >&2;;
-        33) printf $SB_ERROR'\n' "ERROR: Exit Code ${error}. Error running ${error_value} ..." >&2;;
-        40) printf $SB_ERROR'\n' "ERROR: Exit Code ${error}. PDB ${error_value} does exits ..." >&2;;
-        41) printf $SB_ERROR'\n' "ERROR: Exit Code ${error}. PDB ${error_value} does not exits ..." >&2;;
-        90) printf $SB_ERROR'\n' "ERROR: Exit Code ${error}. Received signal SIGINT / Interrupt / CTRL-C ..." >&2;;
-        91) printf $SB_ERROR'\n' "ERROR: Exit Code ${error}. Received signal TERM to terminate the script ..." >&2;;
-        92) printf $SB_ERROR'\n' "ERROR: Exit Code ${error}. Received signal ..." >&2;;
-        99) printf $SB_INFO'\n'  "INFO : Just wanna say hallo.";;
-        ?)  printf $SB_ERROR'\n' "ERROR: Exit Code ${1}. Unknown Error.";;
+        0)  printf $SB_ANSI_SUCCESS'\n' "INFO : Successfully finish ${SB_SCRIPT_NAME}";;
+        1)  printf $SB_ANSI_ERROR'\n' "ERROR: Exit Code ${error}. Wrong amount of arguments. See usage for correct one." ;;
+        2)  printf $SB_ANSI_ERROR'\n' "ERROR: Exit Code ${error}. Wrong arguments (${error_value}). See usage for correct one." >&2;;
+        3)  printf $SB_ANSI_ERROR'\n' "ERROR: Exit Code ${error}. Missing mandatory argument (${error_value}). See usage ..." >&2;;
+        5)  printf $SB_ANSI_ERROR'\n' "ERROR: Exit Code ${error}. Missing common function file (${error_value}) to source." >&2;;
+        10) printf $SB_ANSI_ERROR'\n' "ERROR: Exit Code ${error}. Command ${error_value} isn't installed/available on this system..." >&2;;
+        20) printf $SB_ANSI_ERROR'\n' "ERROR: Exit Code ${error}. File ${error_value} already exists..." >&2;;
+        21) printf $SB_ANSI_ERROR'\n' "ERROR: Exit Code ${error}. Directory ${error_value} is not writeable..." >&2;;
+        22) printf $SB_ANSI_ERROR'\n' "ERROR: Exit Code ${error}. Can not read file ${error_value} ..." >&2;;
+        23) printf $SB_ANSI_ERROR'\n' "ERROR: Exit Code ${error}. Can not write file ${error_value} ..." >&2;;
+        24) printf $SB_ANSI_ERROR'\n' "ERROR: Exit Code ${error}. Can not create skip/reject files in ${error_value} ..." >&2;;
+        25) printf $SB_ANSI_ERROR'\n' "ERROR: Exit Code ${error}. Can not read file password file ${error_value} ..." >&2;;
+        26) printf $SB_ANSI_ERROR'\n' "ERROR: Exit Code ${error}. Can not write tempfile file ${error_value} ..." >&2;;
+        27) printf $SB_ANSI_ERROR'\n' "ERROR: Exit Code ${error}. Invalid password file ${error_value} ..." >&2;;
+        28) printf $SB_ANSI_ERROR'\n' "ERROR: Exit Code ${error}. Missing password for ${error_value:-'n/a'} ..." >&2;;
+        33) printf $SB_ANSI_ERROR'\n' "ERROR: Exit Code ${error}. Error running ${error_value} ..." >&2;;
+        40) printf $SB_ANSI_ERROR'\n' "ERROR: Exit Code ${error}. PDB ${error_value} does exits ..." >&2;;
+        41) printf $SB_ANSI_ERROR'\n' "ERROR: Exit Code ${error}. PDB ${error_value} does not exits ..." >&2;;
+        90) printf $SB_ANSI_ERROR'\n' "ERROR: Exit Code ${error}. Received signal SIGINT / Interrupt / CTRL-C ..." >&2;;
+        91) printf $SB_ANSI_ERROR'\n' "ERROR: Exit Code ${error}. Received signal TERM to terminate the script ..." >&2;;
+        92) printf $SB_ANSI_ERROR'\n' "ERROR: Exit Code ${error}. Received signal ..." >&2;;
+        99) printf $SB_ANSI_INFO'\n'  "INFO : Just wanna say hallo.";;
+        ?)  printf $SB_ANSI_ERROR'\n' "ERROR: Exit Code ${1}. Unknown Error.";;
     esac
 
     exit ${error}
@@ -200,13 +201,13 @@ function clean_quit() {
 # Purpose....: function to handle interupt by CTRL-C
 # ------------------------------------------------------------------------------
 function on_int() {
-  printf $SB_ERROR'\n' "You hit CTRL-C, are you sure ? (y/n)"
+  printf $SB_ANSI_ERROR'\n' "You hit CTRL-C, are you sure ? (y/n)"
   read answer
   if [[ ${answer} = "y" ]]; then
-    printf $SB_ERROR'\n' "OK, lets quit then"
+    printf $SB_ANSI_ERROR'\n' "OK, lets quit then"
     clean_quit 90
   else
-    printf $SB_ERROR'\n' "OK, lets continue then"
+    printf $SB_ANSI_ERROR'\n' "OK, lets continue then"
   fi
 }
 
@@ -215,7 +216,7 @@ function on_int() {
 # Purpose....: function to handle TERM signal
 # ------------------------------------------------------------------------------
 function on_term() {
-  printf $SB_ERROR'\n' "I have recived a terminal signal. Terminating script..."
+  printf $SB_ANSI_ERROR'\n' "I have recived a terminal signal. Terminating script..."
   clean_quit 91
 }
 
@@ -328,16 +329,16 @@ function load_config() {
 # ------------------------------------------------------------------------------
 function dump_runtime_config() {
     echo_debug "DEBUG: Dump current ${SB_BASE_NAME} specific environment variables"
-    echo_debug "---------------------------------------------------------------------------------"
+    echo_debug "DEBUG: ---------------------------------------------------------------------------------"
     if [ "${SB_DEBUG^^}" == "TRUE" ]; then
         for i in $(env|grep -i "${SB_BASE_SHORT_NAME}_"|sort); do
         variable=$(echo "$i"|cut -d= -f1)
         value=$(echo "$i"|cut -d= -f2-)
         value=${value:-"undef"}
-        printf 'DEBUG: %s%s %s\n' "${variable}" "${padding:${#variable}}" "${value}" 
+        echo_debug "$(printf '%s%s %s\n' "DEBUG: ${variable}" "${padding:${#variable}}: " "${value}")" 1>&2
         done
     fi
-    echo_debug "DEBUG: "    
+    echo_debug "DEBUG: ---------------------------------------------------------------------------------"   
 }
 
 function gen_password {
@@ -405,7 +406,7 @@ EOFSQL
 # Purpose....: create AWR report for the last two snapshots in SecBench PDB
 # ------------------------------------------------------------------------------
 function create_awr_report() {
-    pdb=${1:-$SECBENCH_DB}
+    pdb=${1:-$SB_SECBENCH_DB}
     if ! dryrun_enabled; then
         ${ORACLE_HOME}/bin/sqlplus -S -L /nolog <<EOFSQL
             WHENEVER OSERROR EXIT 9;
@@ -423,8 +424,8 @@ EOFSQL
 # Purpose....: drop SecBench PDB
 # ------------------------------------------------------------------------------
 function drop_pdb() {
-    SECBENCH_DB=${SECBENCH_DB:-$SB_SEED_DB}
-    target=${1:-$SECBENCH_DB}
+    SB_SECBENCH_DB=${SB_SECBENCH_DB:-$SB_SEED_DB}
+    target=${1:-$SB_SECBENCH_DB}
     if ! dryrun_enabled; then
         ${ORACLE_HOME}/bin/sqlplus -S -L /nolog <<EOFSQL
             WHENEVER OSERROR EXIT 9;
@@ -444,8 +445,8 @@ EOFSQL
 # Purpose....: check if a PDB does exists
 # ------------------------------------------------------------------------------
 function pdb_exists() {
-    SECBENCH_DB=${SECBENCH_DB:-$SB_SEED_DB}
-    target=${1:-$SECBENCH_DB}
+    SB_SECBENCH_DB=${SB_SECBENCH_DB:-$SB_SEED_DB}
+    target=${1:-$SB_SECBENCH_DB}
     target=${target^^}
     pdb=$(${ORACLE_HOME}/bin/sqlplus -S -L /nolog <<EOFSQL
         WHENEVER OSERROR EXIT 9;
@@ -468,13 +469,13 @@ EOFSQL
 # ------------------------------------------------------------------------------
 function create_pdb() {
     source=${1:-$SB_SEED_DB}
-    target=${2:-$SECBENCH_DB}
+    target=${2:-$SB_SECBENCH_DB}
     if ! dryrun_enabled; then
         ${ORACLE_HOME}/bin/sqlplus -S -L /nolog <<EOFSQL
             WHENEVER OSERROR EXIT 9;
             WHENEVER SQLERROR EXIT SQL.SQLCODE;
             CONNECT / AS SYSDBA
-            SPOOL $SB_LOG_DIR/sb_sbseed_drop_$(date "+%Y.%m.%d_%H%M%S").log
+            SPOOL $SB_LOG_DIR/sb_secbench_create_pdb_$(date "+%Y.%m.%d_%H%M%S").log
             @$SB_SQL_DIR/sb_secbench_create_pdb.sql $source $target 
 EOFSQL
         if [ $? != 0 ]; then clean_quit 33 "sqlplus clone $source to $target "; fi
@@ -492,7 +493,7 @@ function run_charbench() {
     users=${2:-10}
     DBHOST=$(lsnrctl status|grep -iv xdb|grep -i host |sed 's/.*(HOST=\(.*\))(.*/\1/')
     DBPORT=$(lsnrctl status|grep -iv xdb|grep -i host |sed 's/.*(PORT=\([0-9]*\).*/\1/')
-    DBSERVICE=$(lsnrctl status|grep -iv xdb|grep -i $SECBENCH_DB|sed 's/.*"\(.*\)".*/\1/')
+    DBSERVICE=$(lsnrctl status|grep -iv xdb|grep -i $SB_SECBENCH_DB|sed 's/.*"\(.*\)".*/\1/')
     # -dbap <password>  the password of admin user (used for collecting DB Stats)
     # -dbau <username>  the username of admin user (used for collecting DB stats)
     # -com <comment>    specify comment for this benchmark run (in double quotes)

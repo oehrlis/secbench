@@ -14,7 +14,7 @@
 #              at http://www.apache.org/licenses/
 # ------------------------------------------------------------------------------
 # - Customization --------------------------------------------------------------
-DEFAULT_SEED_DB="sbseed"          # default name for the SecBench seed database
+DEFAULT_SEED_DB="sbpdb_seed"          # default name for the SecBench seed database
 DEFAULT_TOOLS="sqlplus"
 # - End of Customization -------------------------------------------------------
 
@@ -23,6 +23,8 @@ DEFAULT_TOOLS="sqlplus"
 export SB_SCRIPT_NAME=$(basename ${BASH_SOURCE[0]})
 export SB_BIN_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 export SB_ETC_DIR="$(dirname ${SB_BIN_DIR})/etc"
+export SB_LOG_DIR="$(dirname ${SB_BIN_DIR})/log"
+
 # define logfile and logging
 export LOG_BASE=${LOG_BASE:-"$SCRIPT_BIN_DIR"}  # Use script directory as default logbase
 # Define Logfile but first reset LOG_BASE if directory does not exists

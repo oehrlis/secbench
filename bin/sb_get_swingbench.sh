@@ -23,8 +23,9 @@ DEFAULT_TOOLS="curl unzip"
 export SB_SCRIPT_NAME=$(basename ${BASH_SOURCE[0]})
 export SB_BIN_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 export SB_LOG_DIR="$(dirname ${SB_BIN_DIR})/log"
+
 # define logfile and logging
-export LOG_BASE=${LOG_BASE:-"$SCRIPT_BIN_DIR"}  # Use script directory as default logbase
+export LOG_BASE=${LOG_BASE:-"$SB_LOG_DIR"}  # Use script directory as default logbase
 # Define Logfile but first reset LOG_BASE if directory does not exists
 if [ ! -d ${LOG_BASE} ] || [ ! -w ${LOG_BASE} ] ; then
     echo "INFO : set LOG_BASE to /tmp"

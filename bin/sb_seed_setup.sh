@@ -14,7 +14,7 @@
 #              at http://www.apache.org/licenses/
 # ------------------------------------------------------------------------------
 # - Customization --------------------------------------------------------------
-DEFAULT_SEED_DB="sbseed"            # default name for the SecBench seed database
+DEFAULT_SEED_DB="sbpdb_seed"            # default name for the SecBench seed database
 DEFAULT_SB_SCALE="0.5"              # default value for the Swingbench scale
 DEFAULT_SB_TBS_NAME="SOE_DATA"      # default value for the tablespace used to install SEO
 DEFAULT_SB_TBS_SIZE="2048M"         # default value for the tablespace used to install SEO
@@ -30,10 +30,10 @@ DEFAULT_SB_USER="soe"               # default value for the default password
 export SB_SCRIPT_NAME=$(basename ${BASH_SOURCE[0]})
 export SB_BIN_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 export SB_LOG_DIR="$(dirname ${SB_BIN_DIR})/log"
-export SB_SQL_DIR="$(dirname ${SB_BIN_DIR})/sql"
 export SB_ETC_DIR="$(dirname ${SB_BIN_DIR})/etc"
+
 # define logfile and logging
-export LOG_BASE=${LOG_BASE:-"$SCRIPT_BIN_DIR"}  # Use script directory as default logbase
+export LOG_BASE=${LOG_BASE:-"$SB_LOG_DIR"}  # Use script directory as default logbase
 # Define Logfile but first reset LOG_BASE if directory does not exists
 if [ ! -d ${LOG_BASE} ] || [ ! -w ${LOG_BASE} ] ; then
     echo "INFO : set LOG_BASE to /tmp"
