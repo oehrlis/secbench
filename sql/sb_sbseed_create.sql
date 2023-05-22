@@ -1,16 +1,16 @@
 --------------------------------------------------------------------------------
 -- OraDBA - Oracle Database Infrastructure and Security, 5630 Muri, Switzerland
 --------------------------------------------------------------------------------
---  Name......: sb_sbseed_create.sql
---  Author....: Stefan Oehrli (oes) stefan.oehrli@oradba.com
---  Editor....: Stefan Oehrli
---  Date......: 2023.05.19
---  Revision..:  
---  Purpose...: Script to create a SecBench SEED PDB
---  Notes.....:  
---  Reference.: SYS (or grant manually to a DBA)
---  License...: Apache License Version 2.0, January 2004 as shown
---              at http://www.apache.org/licenses/
+-- Name......: sb_sbseed_create.sql
+-- Author....: Stefan Oehrli (oes) stefan.oehrli@oradba.com
+-- Editor....: Stefan Oehrli
+-- Date......: 2023.05.19
+-- Revision..:  
+-- Purpose...: Script to create a SecBench SEED PDB
+-- Notes.....:  
+-- Reference.: SYS (or grant manually to a DBA)
+-- License...: Apache License Version 2.0, January 2004 as shown
+--             at http://www.apache.org/licenses/
 --------------------------------------------------------------------------------
 -- define default values
 DEFINE _seed_pdb_name   = 'sbseed'

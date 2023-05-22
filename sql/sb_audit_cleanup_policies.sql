@@ -1,17 +1,17 @@
 --------------------------------------------------------------------------------
 -- OraDBA - Oracle Database Infrastructure and Security, 5630 Muri, Switzerland
 --------------------------------------------------------------------------------
---  Name......: sb_audit_cleanup_policies.sql
---  Author....: Stefan Oehrli (oes) stefan.oehrli@oradba.com
---  Editor....: Stefan Oehrli
---  Date......: 2023.05.19
---  Usage.....: 
---  Purpose...: Disable all audit policies and drop all policies not maintained
---              by ORACLE
---  Notes.....: 
---  Reference.: 
---  License...: Apache License Version 2.0, January 2004 as shown
---              at http://www.apache.org/licenses/
+-- Name......: sb_audit_cleanup_policies.sql
+-- Author....: Stefan Oehrli (oes) stefan.oehrli@oradba.com
+-- Editor....: Stefan Oehrli
+-- Date......: 2023.05.19
+-- Usage.....: 
+-- Purpose...: Disable all audit policies and drop all policies not maintained
+--             by ORACLE
+-- Notes.....: 
+-- Reference.: 
+-- License...: Apache License Version 2.0, January 2004 as shown
+--             at http://www.apache.org/licenses/
 --------------------------------------------------------------------------------
 SET SERVEROUTPUT ON
 SET LINESIZE 160 PAGESIZE 200

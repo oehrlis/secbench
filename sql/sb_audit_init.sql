@@ -1,26 +1,26 @@
 --------------------------------------------------------------------------------
 -- OraDBA - Oracle Database Infrastructure and Security, 5630 Muri, Switzerland
 --------------------------------------------------------------------------------
---  Name......: sb_audit_init.sql
---  Author....: Stefan Oehrli (oes) stefan.oehrli@oradba.com
---  Editor....: Stefan Oehrli
---  Date......: 2023.05.19
---  Usage.....: sb_config_audit.sql <TABLESPACE NAME> <DATAFILE SIZE> <AUDIT RETENTION>
+-- Name......: sb_audit_init.sql
+-- Author....: Stefan Oehrli (oes) stefan.oehrli@oradba.com
+-- Editor....: Stefan Oehrli
+-- Date......: 2023.05.19
+-- Usage.....: sb_config_audit.sql <TABLESPACE NAME> <DATAFILE SIZE> <AUDIT RETENTION>
 --
---              TABLESPACE NAME   Name of the audit tablespace. Default is AUDIT_DATA
---              DATAFILE SIZE     Initial size of datafile. Default 20480K
---              AUDIT RETENTION   Day for which a audit timestamp will be created e.g.
---                                sysdate - <AUDIT RETENTION> This does help to create
---                                somekind of time window where audit records will be
---                                awailable on the system. This amount of DAY
---                                is also the fallback when the AVAGENT does not CREATE
---                                timestamps. Default 30 days
---  Purpose...: Initialize Audit environment. Create Tablespace, reorganize Audit
---              tables and create jobs
---  Notes.....: 
---  Reference.: 
---  License...: Apache License Version 2.0, January 2004 as shown
---              at http://www.apache.org/licenses/
+--             TABLESPACE NAME   Name of the audit tablespace. Default is AUDIT_DATA
+--             DATAFILE SIZE     Initial size of datafile. Default 20480K
+--             AUDIT RETENTION   Day for which a audit timestamp will be created e.g.
+--                               sysdate - <AUDIT RETENTION> This does help to create
+--                               somekind of time window where audit records will be
+--                               awailable on the system. This amount of DAY
+--                               is also the fallback when the AVAGENT does not CREATE
+--                               timestamps. Default 30 days
+-- Purpose...: Initialize Audit environment. Create Tablespace, reorganize Audit
+--             tables and create jobs
+-- Notes.....: 
+-- Reference.: 
+-- License...: Apache License Version 2.0, January 2004 as shown
+--             at http://www.apache.org/licenses/
 --------------------------------------------------------------------------------
 
 -- define default values
