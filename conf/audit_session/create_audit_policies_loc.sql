@@ -1,17 +1,17 @@
 --------------------------------------------------------------------------------
---  Trivadis - Part of Accenture, Platform Factory - Data Platforms
---  Saegereistrasse 29, 8152 Glattbrugg, Switzerland
+-- Trivadis - Part of Accenture, Platform Factory - Data Platforms
+-- Saegereistrasse 29, 8152 Glattbrugg, Switzerland
 --------------------------------------------------------------------------------
---  Name......: create_audit_policies_loc.sql
---  Author....: Stefan Oehrli (oes) stefan.oehrli@accenture.com
---  Editor....: Stefan Oehrli
---  Date......: 2023.03.06
---  Usage.....: 
---  Purpose...: Create custom local audit policies
---  Notes.....: 
---  Reference.: 
---  License...: Apache License Version 2.0, January 2004 as shown
---              at http://www.apache.org/licenses/
+-- Name......: create_audit_policies_loc.sql
+-- Author....: Stefan Oehrli (oes) stefan.oehrli@accenture.com
+-- Editor....: Stefan Oehrli
+-- Date......: 2023.03.06
+-- Usage.....: 
+-- Purpose...: Create custom local audit policies
+-- Notes.....: 
+-- Reference.: 
+-- License...: Apache License Version 2.0, January 2004 as shown
+--             at http://www.apache.org/licenses/
 --------------------------------------------------------------------------------
 
 SET SERVEROUTPUT ON

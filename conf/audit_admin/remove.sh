@@ -15,7 +15,6 @@
 # ------------------------------------------------------------------------------
 # - Customization --------------------------------------------------------------
 DEFAULT_SB_SECBENCH_DB="sbregular"      # default name for the SecBench PDB
-export SB_DEBUG=TRUE
 # - End of Customization -------------------------------------------------------
 
 # - Default Values -------------------------------------------------------------
@@ -67,11 +66,10 @@ dump_runtime_config     # dump current tool specific environment in debug mode
 # - Main -----------------------------------------------------------------------
 
 ${ORACLE_HOME}/bin/sqlplus -S -L /nolog <<EOFSQL
-    WHENEVER OSERROR EXIT 9;
-    WHENEVER SQLERROR EXIT SQL.SQLCODE;
     CONNECT / AS SYSDBA
+    WHENEVER SQLERROR EXIT SQL.SQLCODE;
     ALTER SESSION SET CONTAINER=$SB_SECBENCH_DB;
-    @remove.sql
+    @$SB_WORK_DIR/remove.sql
 EOFSQL
 if [ $? != 0 ]; then clean_quit 33 "sqlplus error in $SB_BENCHMARK $SB_SCRIPT_NAME"; fi 
 

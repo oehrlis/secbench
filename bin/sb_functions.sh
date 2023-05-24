@@ -53,6 +53,8 @@ padding='............................'
 export HOME=${HOME:-~}
 export SB_DRYRUN=${SB_DRYRUN:-"FALSE"}
 export SB_FORCE=${SB_FORCE:-"FALSE"}
+export SB_PREPARED=${SB_PREPARED:-"FALSE"}
+export SB_WORK_DIR=${SB_WORK_DIR:-""}
 # Define the color for the output 
 export SB_ANSI_INFO="\e[96m%b\e[0m" 
 export SB_ANSI_SUCCESS="\e[92m%b\e[0m" 
@@ -74,6 +76,17 @@ function force_enabled () {
     fi
 }
 
+# ------------------------------------------------------------------------------
+# Function...: prepared_enabled
+# Purpose....: Check if PREPARED mode is enabled
+# ------------------------------------------------------------------------------
+function prepared_enabled () {
+    if [ "${SB_PREPARED^^}" == "TRUE" ]; then
+        return 0
+    else
+        return 1
+    fi
+}
 # ------------------------------------------------------------------------------
 # Function...: dryrun_enabled
 # Purpose....: Check if DRYRUN mode is enabled
@@ -263,7 +276,7 @@ function get_db_port() {
 # ------------------------------------------------------------------------------
 function get_db_service() {
     pdb=${1:-$SB_SEED_DB}
-    echo $(lsnrctl status|grep -iv xdb|grep -i $pdb|sed 's/.*"\(.*\)".*/\1/')
+    echo $(lsnrctl status|grep -iv xdb|grep -i $pdb|sed 's/.*"\(.*\)".*/\1/'|head -1|cut -d' ' -f1)
 }
 # ------------------------------------------------------------------------------
 # Function...: update_path
@@ -388,9 +401,8 @@ function create_awr_snapshot() {
     pdb=${1:-$SB_SEED_DB}
     if ! dryrun_enabled; then
         ${ORACLE_HOME}/bin/sqlplus -S -L /nolog <<EOFSQL
-            WHENEVER OSERROR EXIT 9;
-            WHENEVER SQLERROR EXIT SQL.SQLCODE;
             CONNECT / AS SYSDBA
+            WHENEVER SQLERROR EXIT SQL.SQLCODE;
             ALTER SESSION SET CONTAINER=$pdb;
             SELECT to_char(sysdate, 'YYYY-MM-DD HH24:MI') AS tstamp,
                 dbms_workload_repository.create_snapshot() AS snap_id FROM dual;
@@ -406,12 +418,39 @@ EOFSQL
 # Purpose....: create AWR report for the last two snapshots in SecBench PDB
 # ------------------------------------------------------------------------------
 function create_awr_report() {
+    SB_WORK_DIR=${SB_WORK_DIR:-$SB_OUT_DIR}
     pdb=${1:-$SB_SECBENCH_DB}
+    benchmark=${2:-$pdb}
+    uc=${3:-""}
     if ! dryrun_enabled; then
         ${ORACLE_HOME}/bin/sqlplus -S -L /nolog <<EOFSQL
-            WHENEVER OSERROR EXIT 9;
             WHENEVER SQLERROR EXIT SQL.SQLCODE;
             CONNECT / AS SYSDBA
+
+            ALTER SESSION SET CONTAINER=$pdb;
+            SET FEEDBACK OFF
+            SET VERIFY OFF
+            DEFINE  num_days     = 3;
+            DEFINE  report_type  = 'html';
+            DEFINE  awr_location = 'AWR_PDB';
+
+            COLUMN inst_num NEW_VALUE inst_num NOPRINT
+            SELECT instance_number inst_num FROM v\$instance;
+            COLUMN inst_name NEW_VALUE inst_name NOPRINT
+            SELECT upper(instance_name) inst_name FROM v\$instance;
+
+            COLUMN db_name NEW_VALUE db_name NOPRINT
+            SELECT upper(name) db_name FROM v\$pdbs;
+            COLUMN dbid NEW_VALUE dbid NOPRINT
+            SELECT upper(dbid) dbid FROM v\$pdbs;
+
+            COLUMN begin_snap NEW_VALUE begin_snap NOPRINT
+            SELECT max(snap_id)-1 begin_snap FROM dba_hist_snapshot WHERE dbid=&dbid;
+            COLUMN end_snap NEW_VALUE end_snap NOPRINT
+            SELECT max(snap_id) end_snap FROM dba_hist_snapshot WHERE dbid=&dbid;
+
+            DEFINE  report_name  = $SB_OUTPUT_DIR/soe-${benchmark}-${uc}-awrrpt.html
+            @@?/rdbms/admin/awrrpti
 EOFSQL
         if [ $? != 0 ]; then clean_quit 33 "sqlplus AWR report "; fi 
     else
@@ -428,9 +467,8 @@ function drop_pdb() {
     target=${1:-$SB_SECBENCH_DB}
     if ! dryrun_enabled; then
         ${ORACLE_HOME}/bin/sqlplus -S -L /nolog <<EOFSQL
-            WHENEVER OSERROR EXIT 9;
-            WHENEVER SQLERROR EXIT SQL.SQLCODE;
             CONNECT / AS SYSDBA
+            WHENEVER SQLERROR EXIT SQL.SQLCODE;
             SPOOL $SB_LOG_DIR/sb_drop_${target}_$(date "+%Y.%m.%d_%H%M%S").log
             @$SB_SQL_DIR/sb_secbench_drop_pdb.sql $target
 EOFSQL
@@ -449,14 +487,38 @@ function pdb_exists() {
     target=${1:-$SB_SECBENCH_DB}
     target=${target^^}
     pdb=$(${ORACLE_HOME}/bin/sqlplus -S -L /nolog <<EOFSQL
-        WHENEVER OSERROR EXIT 9;
-        WHENEVER SQLERROR EXIT SQL.SQLCODE;
         CONNECT / AS SYSDBA
+        WHENEVER SQLERROR EXIT SQL.SQLCODE;
+
         SET HEADING OFF
-        select count(*) from v\$pdbs where upper(name)='$target'; 
+        SELECT count(*) FROM v\$pdbs WHERE upper(name)='$target'; 
 EOFSQL
 )
     if [ $pdb -eq 0 ]; then
+        return 1
+    else
+        return 0
+    fi
+}
+
+# ------------------------------------------------------------------------------
+# Function...: component_exists
+# Purpose....: check if a db component is installed
+# ------------------------------------------------------------------------------
+function component_exists() {
+    component=${1:-""}
+    target=${2:-"CDB\$ROOT"}
+    target=${target^^}
+    comp=$(${ORACLE_HOME}/bin/sqlplus -S -L /nolog <<EOFSQL
+        CONNECT / AS SYSDBA
+        WHENEVER SQLERROR EXIT SQL.SQLCODE;
+        SET HEADING OFF
+        SET FEEDBACK OFF
+        ALTER SESSION SET CONTAINER=$target;
+        SELECT count(*) FROM dba_registry WHERE comp_name='$component'; 
+EOFSQL
+)
+    if [ $comp -eq 0 ]; then
         return 1
     else
         return 0
@@ -472,9 +534,8 @@ function create_pdb() {
     target=${2:-$SB_SECBENCH_DB}
     if ! dryrun_enabled; then
         ${ORACLE_HOME}/bin/sqlplus -S -L /nolog <<EOFSQL
-            WHENEVER OSERROR EXIT 9;
-            WHENEVER SQLERROR EXIT SQL.SQLCODE;
             CONNECT / AS SYSDBA
+            WHENEVER SQLERROR EXIT SQL.SQLCODE;
             SPOOL $SB_LOG_DIR/sb_secbench_create_pdb_$(date "+%Y.%m.%d_%H%M%S").log
             @$SB_SQL_DIR/sb_secbench_create_pdb.sql $source $target 
 EOFSQL

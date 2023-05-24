@@ -1,0 +1,22 @@
+# ------------------------------------------------------------------------------
+# Trivadis - Part of Accenture, Platform Factory - Data Platforms
+# Saegereistrasse 29, 8152 Glattbrugg, Switzerland
+# ------------------------------------------------------------------------------
+# Name.......: dsi.ora
+# Author.....: Stefan Oehrli (oes) stefan.oehrli@accenture.com
+# Editor.....: Stefan Oehrli
+# Date.......: 2021.11.23
+# Revision...: --
+# Purpose....: Oracle Centrally Managed Users Configuration File
+# Notes......: --
+# Reference..: Oracle Database Security 19c
+# ------------------------------------------------------------------------------
+# Modified...:
+# YYYY.MM.DD  Visa  Change
+# ------------------------------------------------------------------------------
+# 2021.11.23  soe   Initial version
+# ------------------------------------------------------------------------------
+DSI_DIRECTORY_SERVERS = (ad.trivadislabs.com::636)
+DSI_DEFAULT_ADMIN_CONTEXT = "dc=trivadislabs,dc=com"
+DSI_DIRECTORY_SERVER_TYPE = AD
+# ------------------------------------------------------------------------------

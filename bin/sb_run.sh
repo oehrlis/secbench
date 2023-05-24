@@ -79,6 +79,8 @@ function Usage() {
                         configuration files.
     -n                  Dry run mode. Show what would be done but do not actually do it
     -F                  Force mode to delete the seed PDB
+    -P                  Prepared mode enabled. PDB hast to be created manually
+    -L                  List available benchmarks in $SB_CONF_DIR
 
   Configuration file:
     The script does load configuration files to define default values as an
@@ -92,6 +94,28 @@ $((get_list_of_config && echo "Command line parameter")|cat -b)
 EOI
     dump_runtime_config     # dump current tool specific environment in debug mode
     clean_quit ${error} ${error_value}  
+}
+
+# ------------------------------------------------------------------------------
+# Function...: list_benchmarks
+# Purpose....: List available benchmarks
+# ------------------------------------------------------------------------------
+function list_benchmarks() {
+    ls $SB_CONF_DIR
+
+    echo "Available Security Benchmark Configurations:"
+    echo
+    for i in $SB_CONF_DIR/*/$SB_SETUP; do
+        bench=$(basename $(dirname $i))
+        readme=$(dirname $i)/README.md
+        if [ -f "$readme" ]; then
+            title=$(head -1 $readme |cut -d' ' -f2-)
+        else
+            title="n/a"
+        fi
+        printf '%s%s %s\n' "${bench}" "${padding:${#bench}}: " "${title}"
+    done
+    clean_quit 0
 }
 # - EOF Functions --------------------------------------------------------------
 
@@ -135,12 +159,15 @@ check_tools             # check if we do have the required tools available
 dump_runtime_config     # dump current tool specific environment in debug mode
 
 # get options
-while getopts hvdknB:E: CurOpt; do
+while getopts hvdLkFPnB:E: CurOpt; do
     case ${CurOpt} in
         h) Usage 0;;
         v) TVDLDAP_VERBOSE="TRUE" ;;
         d) TVDLDAP_DEBUG="TRUE" ;;
         n) SB_DRYRUN="TRUE";;
+        F) SB_FORCE="TRUE";; 
+        P) SB_PREPARED="TRUE";; 
+        L) list_benchmarks;; 
         B) SB_USE_CASES=$(echo $OPTARG | tr "," " ");;
         k) SB_KEEP_PDB="TRUE";;
         E) clean_quit "${OPTARG}";;
@@ -182,8 +209,6 @@ if [ -z "$SB_OS_PWD" ]; then
     fi
 fi
 
-
-
 # create output folder
 mkdir -p $SB_OUTPUT_DIR
 
@@ -209,20 +234,33 @@ for bench in $SB_USE_CASES; do
     echo "INFO : Start Sec Bench for $bench"
     if [ -d "$SB_CONF_DIR/$bench" ] && [ -x "$SB_CONF_DIR/$bench/$SB_SETUP" ] && [ -x "$SB_CONF_DIR/$bench/$SB_REMOVE" ]; then
 
-        
         if [ ${SB_KEEP_PDB} == "TRUE" ]; then
             SB_SECBENCH_DB="SBPDB_${bench^^}"
-            echo "INFO : create SecBench PDB $SB_SECBENCH_DB from $SB_SEED_DB"
-            create_pdb $SB_SEED_DB $SB_SECBENCH_DB
+            if pdb_exists $SB_SECBENCH_DB; then
+                if force_enabled; then
+                    echo "INFO : recreate SecBench PDB $SB_SECBENCH_DB from $SB_SEED_DB"
+                    drop_pdb $SB_SECBENCH_DB
+                    create_pdb $SB_SEED_DB $SB_SECBENCH_DB
+                else
+                    clean_quit 40 $SB_SECBENCH_DB
+                fi
+            elif prepared_enabled; then
+                echo "INFO : SecBench PDB $SB_SECBENCH_DB prepared. No setup performed"
+            else
+                echo "INFO : create SecBench PDB $SB_SECBENCH_DB from $SB_SEED_DB"
+                create_pdb $SB_SEED_DB $SB_SECBENCH_DB
+            fi
         else
             echo "INFO : recreate SecBench PDB $SB_SECBENCH_DB from $SB_SEED_DB"
             drop_pdb $SB_SECBENCH_DB
             create_pdb $SB_SEED_DB $SB_SECBENCH_DB
         fi
 
-        if pdb_exists $SB_SECBENCH_DB; then
+        if pdb_exists $SB_SECBENCH_DB && ! prepared_enabled; then
             echo "INFO : prepare and setup configuration for $bench"
             $SB_CONF_DIR/$bench/$SB_SETUP $SB_SECBENCH_DB $SB_OUTPUT_DIR
+        elif prepared_enabled; then
+            echo "INFO : SecBench PDB $SB_SECBENCH_DB prepared. No setup performed"
         elif dryrun_enabled; then
             echo "INFO : Dry run enabled, skip $SB_SETUP for $bench in $SB_SECBENCH_DB"
         else
@@ -234,14 +272,14 @@ for bench in $SB_USE_CASES; do
             echo "INFO : [$bench] create AWR snapshot in $SB_SECBENCH_DB"
             create_awr_snapshot $SB_SECBENCH_DB
 
-            echo "INFO : [$bench] run charbench for $SB_RUNTIME with $uc concurrent users"
+            echo "INFO : [$bench] start charbench at $(date "+%H:%M:%S") for $SB_RUNTIME with $uc concurrent users"
             run_charbench $bench $uc
             
             echo "INFO : [$bench] create AWR snapshot in $SB_SECBENCH_DB"
             create_awr_snapshot $SB_SECBENCH_DB
 
-            echo "INFO : [$bench] create AWR report"
-            create_awr_report
+            echo "INFO : [$bench] create AWR report for $SB_SECBENCH_DB $bench $uc"
+            create_awr_report "$SB_SECBENCH_DB" "$bench" "$uc"
         done
 
         if pdb_exists $SB_SECBENCH_DB; then

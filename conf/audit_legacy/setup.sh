@@ -66,10 +66,9 @@ dump_runtime_config     # dump current tool specific environment in debug mode
 
 echo "INFO : Set legacy audit parameter in ${ORACLE_SID}"
 ${ORACLE_HOME}/bin/sqlplus -S -L /nolog <<EOFSQL
-    WHENEVER OSERROR EXIT 9;
-    WHENEVER SQLERROR EXIT SQL.SQLCODE;
     CONNECT / AS SYSDBA
-    ALTER SYSTEM SET audit_trail='DB,EXTENDED' SCOPE=SPFILE;
+    WHENEVER SQLERROR EXIT SQL.SQLCODE;
+    ALTER SYSTEM SET audit_trail=DB,EXTENDED SCOPE=SPFILE;
 EOFSQL
 if [ $? != 0 ]; then clean_quit 33 "sqlplus error in $SB_BENCHMARK $SB_SCRIPT_NAME"; fi 
 
@@ -97,11 +96,10 @@ if [ $? != 0 ]; then clean_quit 33 "sqlplus error in $SB_BENCHMARK $SB_SCRIPT_NA
 
 echo "INFO : Configure Audit in the PDB $SB_SECBENCH_DB"
 ${ORACLE_HOME}/bin/sqlplus -S -L /nolog <<EOFSQL
-    WHENEVER OSERROR EXIT 9;
-    WHENEVER SQLERROR EXIT SQL.SQLCODE;
     CONNECT / AS SYSDBA
+    WHENEVER SQLERROR EXIT SQL.SQLCODE;
     ALTER SESSION SET CONTAINER=$SB_SECBENCH_DB;
-    @setup.sql
+    @$SB_WORK_DIR/setup.sql
 EOFSQL
 if [ $? != 0 ]; then clean_quit 33 "sqlplus error in $SB_BENCHMARK $SB_SCRIPT_NAME"; fi 
 

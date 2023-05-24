@@ -67,6 +67,7 @@ function Usage() {
   Setup options:
     -S <SEED PDB>       Name of the seed PDB (mandatory)
     -s <SCALE>          Swingbench scale / mulitiplier for default config
+                        (default \$SB_SCALE=${SB_SCALE})
     -T <TABLESPACE>     Name of the tablespace for swingbench schema.
                         (default \$DEFAULT_SB_TBS_NAME=${DEFAULT_SB_TBS_NAME}).
     -t <TBS SIZE>       Size of the tablespace for swingbench schema.
@@ -132,7 +133,7 @@ check_tools             # check if we do have the required tools available
 dump_runtime_config     # dump current tool specific environment in debug mode
 
 # get options
-while getopts hvdFnS:T:b:E: CurOpt; do
+while getopts hvdFns:S:T:t:E: CurOpt; do
     case ${CurOpt} in
         h) Usage 0;;
         v) TVDLDAP_VERBOSE="TRUE" ;;
@@ -142,7 +143,7 @@ while getopts hvdFnS:T:b:E: CurOpt; do
         S) SB_SEED_DB="${OPTARG}";;
         s) SB_SCALE="${OPTARG}";;
         T) SB_TBS_NAME="${OPTARG}";;
-        b) SB_TBS_SIZE="${OPTARG}";;
+        t) SB_TBS_SIZE="${OPTARG}";;
         E) clean_quit "${OPTARG}";;
         *) Usage 2 $*;;
     esac
@@ -245,7 +246,7 @@ if ! dryrun_enabled; then
         WHENEVER SQLERROR EXIT SQL.SQLCODE;
         CONNECT / AS SYSDBA
         SPOOL $SB_LOG_DIR/sb_sbseed_create_$TIMESTAMP.log
-        @$SB_SQL_DIR/sb_sbseed_create.sql $SB_SEED_DB $SB_TBS_NAME $SB_TBS_SIZE $SB_PASSWORD
+        @$SB_SQL_DIR/sb_sbseed_create.sql $SB_SEED_DB $SB_TBS_NAME $SB_TBS_SIZE $SB_DBA_PASSWORD
 EOFSQL
     if [ $? != 0 ]; then clean_quit 33 "sqlplus $SB_SQL_DIR/sb_sbseed_create.sql"; fi 
 else
@@ -273,7 +274,7 @@ fi
 if ! dryrun_enabled; then
     echo "INFO : Install swingbench schema in $SB_SEED_DB using oewizard with scale $SB_SCALE"
     oewizard -cs //$(get_db_host):$(get_db_port)/$(get_db_service $SB_SEED_DB) \
-        -dba $SB_DBA_USER -dbap $SB_PASSWORD -create \
+        -dba $SB_DBA_USER -dbap $SB_DBA_PASSWORD -create \
         -scale $SB_SCALE -ts $SB_TBS_NAME -allindexes -nopart \
         -u $SB_USER -p $SB_PASSWORD -cl
     if [ $? != 0 ]; then clean_quit 33 "oewizard"; fi 

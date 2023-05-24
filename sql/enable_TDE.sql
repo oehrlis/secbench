@@ -47,26 +47,24 @@ ALTER SYSTEM SET TDE_CONFIGURATION='KEYSTORE_CONFIGURATION=FILE' scope=both;
 
 -- create software keystore
 ADMINISTER KEY MANAGEMENT CREATE KEYSTORE '&admin_path/wallet/tde' IDENTIFIED BY "&wallet_pwd";
-
+          
 ADMINISTER KEY MANAGEMENT ADD SECRET '&wallet_pwd' FOR CLIENT 'TDE_WALLET' TO LOCAL AUTO_LOGIN KEYSTORE '&admin_path/wallet/tde_seps';
-
+         
 -- open the wallet
 ADMINISTER KEY MANAGEMENT SET KEYSTORE OPEN IDENTIFIED BY EXTERNAL STORE;
 
 -- create autologin
-ADMINISTER KEY MANAGEMENT CREATE LOCAL AUTO_LOGIN KEYSTORE FROM  KEYSTORE '&admin_path/wallet/tde' identified by "&wallet_pwd";
+ADMINISTER KEY MANAGEMENT CREATE LOCAL AUTO_LOGIN KEYSTORE FROM KEYSTORE '&admin_path/wallet/tde' IDENTIFIED BY "&wallet_pwd";
+STARTUP FORCE;
+
+-- set master key
+ADMINISTER KEY MANAGEMENT SET KEY FORCE KEYSTORE IDENTIFIED BY EXTERNAL STORE WITH BACKUP;
 
 -- list wallet information
 SET LINESIZE 160 PAGESIZE 200
 COL wrl_type FOR A10
 COL wrl_parameter FOR A50
 
-SELECT * FROM v$encryption_wallet;
-
--- create master key
-ADMINISTER KEY MANAGEMENT SET ENCRYPTION KEY USING TAG 'initial' IDENTIFIED BY EXTERNAL STORE WITH BACKUP USING 'initial_key_backup';
-
--- list wallet information
 SELECT * FROM v$encryption_wallet;
 
 -- list information about TDE TS
