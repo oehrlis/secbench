@@ -80,19 +80,7 @@ fi
 # - EOF Initialization ---------------------------------------------------------
 # - Main -----------------------------------------------------------------------
 
-if ! component_exists "Oracle Database Vault"; then
-    echo "INFO : Install DB Vault catalog in $ORACLE_SID:"
-    ${ORACLE_HOME}/bin/sqlplus -S -L /nolog <<EOFSQL
-        CONNECT / AS SYSDBA
-        WHENEVER SQLERROR EXIT SQL.SQLCODE;
-        host $ORACLE_HOME/perl/bin/perl $ORACLE_HOME/rdbms/admin/catcon.pl -n 1 -l $HOME -b install_dbv_catalog $SB_WORK_DIR/install_dbv_catalog.sql
-EOFSQL
-    if [ $? != 0 ]; then clean_quit 33 "sqlplus error in $SB_BENCHMARK $SB_SCRIPT_NAME"; fi 
-else
-    echo "INFO : DB Vault already installed $ORACLE_SID:"
-fi
-
-echo "INFO : Configure DB Vault catalog in $ORACLE_SID and $SB_SECBENCH_DB:"
+echo "INFO : Create common DB Vault users $ORACLE_SID:"
 ${ORACLE_HOME}/bin/sqlplus -S -L /nolog <<EOFSQL
     CONNECT / AS SYSDBA
     WHENEVER SQLERROR EXIT SQL.SQLCODE;
@@ -100,23 +88,38 @@ ${ORACLE_HOME}/bin/sqlplus -S -L /nolog <<EOFSQL
     GRANT CREATE SESSION, SET CONTAINER TO c##sb_dv_owner CONTAINER = ALL;
     CREATE USER c##sb_dv_accmgr IDENTIFIED BY $SB_DBV_PWD;
     GRANT CREATE SESSION, SET CONTAINER TO c##sb_dv_accmgr CONTAINER = ALL;
-    EXEC dvsys.configure_dv('c##sb_dv_owner','c##sb_dv_accmgr');
 EOFSQL
 if [ $? != 0 ]; then clean_quit 33 "sqlplus error in $SB_BENCHMARK $SB_SCRIPT_NAME"; fi 
 
-echo "INFO : Enable DB Vault in $ORACLE_SID CDB\$ROOT and $SB_SECBENCH_DB:"
+echo "INFO : Enable DB Vault in $ORACLE_SID:"
 ${ORACLE_HOME}/bin/sqlplus -S -L /nolog <<EOFSQL
+    CONNECT / AS SYSDBA
+    WHENEVER SQLERROR EXIT SQL.SQLCODE;
+    EXEC dvsys.configure_dv('c##sb_dv_owner','c##sb_dv_accmgr');
     CONNECT c##sb_dv_owner/$SB_DBV_PWD@$(get_db_host):$(get_db_port)/$(get_db_service $ORACLE_SID) 
     EXEC dbms_macadm.enable_dv;
-    ALTER SESSION SET CONTAINER=$SB_SECBENCH_DB;
-    EXEC dbms_macadm.enable_dv;
+    CONN / AS SYSDBA
+    STARTUP FORCE;
 EOFSQL
 if [ $? != 0 ]; then clean_quit 33 "sqlplus error in $SB_BENCHMARK $SB_SCRIPT_NAME"; fi 
 
-echo "INFO : Enable DB Vault in $ORACLE_SID CDB\$ROOT and $SB_SECBENCH_DB:"
+echo "INFO : Enable DB Vault in $SB_SECBENCH_DB:"
+${ORACLE_HOME}/bin/sqlplus -S -L /nolog <<EOFSQL
+    CONNECT / AS SYSDBA
+    WHENEVER SQLERROR EXIT SQL.SQLCODE;
+    ALTER SESSION SET CONTAINER=$SB_SECBENCH_DB;
+    EXEC dvsys.configure_dv('c##sb_dv_owner','c##sb_dv_accmgr');
+    CONNECT c##sb_dv_owner/$SB_DBV_PWD@$(get_db_host):$(get_db_port)/$(get_db_service $SB_SECBENCH_DB) 
+    EXEC dbms_macadm.enable_dv;
+    CONN / AS SYSDBA
+    ALTER SESSION SET CONTAINER=$SB_SECBENCH_DB;
+    STARTUP FORCE;
+EOFSQL
+if [ $? != 0 ]; then clean_quit 33 "sqlplus error in $SB_BENCHMARK $SB_SCRIPT_NAME"; fi 
+
+echo "INFO : Verify DB Vault in $ORACLE_SID CDB\$ROOT and $SB_SECBENCH_DB:"
 ${ORACLE_HOME}/bin/sqlplus -S -L /nolog <<EOFSQL
     CONN / AS SYSDBA
-    STARTUP FORCE;
     COL DESCRIPTION FOR A60
     SELECT * FROM DBA_DV_STATUS;
     SELECT * FROM DBA_OLS_STATUS;
@@ -126,13 +129,9 @@ EOFSQL
 
 echo "INFO : Config DB Vault Realms in $SB_SECBENCH_DB:"
 ${ORACLE_HOME}/bin/sqlplus -S -L /nolog <<EOFSQL
-    CONNECT / AS SYSDBA
-    WHENEVER SQLERROR EXIT SQL.SQLCODE;
-    ALTER SESSION SET CONTAINER=$SB_SECBENCH_DB;
-    CONNECT c##sb_dv_owner/$SB_DBV_PWD@$(get_db_host):$(get_db_port)/$(get_db_service $SB_SEED_DB)
+    CONNECT c##sb_dv_owner/$SB_DBV_PWD@$(get_db_host):$(get_db_port)/$(get_db_service $SB_SECBENCH_DB)
     @$SB_WORK_DIR/config_dbvault.sql
 EOFSQL
-
 if [ $? != 0 ]; then clean_quit 33 "sqlplus error in $SB_BENCHMARK $SB_SCRIPT_NAME"; fi 
 
 echo "INFO : Configure Audit for DB Vault the PDB $SB_SECBENCH_DB"
@@ -140,7 +139,7 @@ ${ORACLE_HOME}/bin/sqlplus -S -L /nolog <<EOFSQL
     CONNECT / AS SYSDBA
     WHENEVER SQLERROR EXIT SQL.SQLCODE;
     ALTER SESSION SET CONTAINER=$SB_SECBENCH_DB;
-    @$SB_WORK_DIR/setup.sql
+    @$SB_WORK_DIR/config_dbv_audit.sql
 EOFSQL
 if [ $? != 0 ]; then clean_quit 33 "sqlplus error in $SB_BENCHMARK $SB_SCRIPT_NAME"; fi 
 

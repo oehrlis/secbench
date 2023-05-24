@@ -71,41 +71,58 @@ sed -i 's/^SQLNET.ENCRYPTION/#SQLNET.ENCRYPTION/' $TNS_ADMIN/sqlnet.ora
 sed -i 's/^SQLNET.CRYPTO_CHECKSUM_TYPES/#SQLNET.CRYPTO_CHECKSUM_TYPES/' $TNS_ADMIN/sqlnet.ora
 sed -i 's/^SQLNET.CRYPTO_CHECKSUMT/#SQLNET.CRYPTO_CHECKSUM/' $TNS_ADMIN/sqlnet.ora
 
-echo "INFO : Disable DB Vault catalog in $ORACLE_SID and $SB_SEED_DB:"
+echo "INFO : Run network.sql script"
+${ORACLE_HOME}/bin/sqlplus -S -L /nolog <<EOFSQL
+    CONNECT / AS SYSDBA
+    WHENEVER SQLERROR EXIT SQL.SQLCODE;
+    ALTER SESSION SET CONTAINER=$SB_SECBENCH_DB;
+    @$SB_WORK_DIR/network.sql
+EOFSQL
+if [ $? != 0 ]; then clean_quit 33 "sqlplus error in $SB_BENCHMARK $SB_SCRIPT_NAME"; fi 
+
+echo "INFO : Delete DB Vault Realms in $SB_SECBENCH_DB:"
+${ORACLE_HOME}/bin/sqlplus -S -L /nolog <<EOFSQL
+    CONNECT c##sb_dv_owner/$SB_DBV_PWD@$(get_db_host):$(get_db_port)/$(get_db_service $SB_SECBENCH_DB)
+    @$SB_WORK_DIR/config_dbvault.sql
+EOFSQL
+if [ $? != 0 ]; then clean_quit 33 "sqlplus error in $SB_BENCHMARK $SB_SCRIPT_NAME"; fi 
+
+echo "INFO : Remove DB Vault in $SB_SECBENCH_DB:"
+${ORACLE_HOME}/bin/sqlplus -S -L /nolog <<EOFSQL
+    CONNECT c##sb_dv_owner/$SB_DBV_PWD@$(get_db_host):$(get_db_port)/$(get_db_service $SB_SECBENCH_DB) 
+    EXEC dbms_macadm.disable_dv;
+    CONN / AS SYSDBA
+    ALTER SESSION SET CONTAINER=$SB_SECBENCH_DB;
+    STARTUP FORCE;
+EOFSQL
+if [ $? != 0 ]; then clean_quit 33 "sqlplus error in $SB_BENCHMARK $SB_SCRIPT_NAME"; fi 
+
+echo "INFO : Remove DB Vault in $ORACLE_SID:"
 ${ORACLE_HOME}/bin/sqlplus -S -L /nolog <<EOFSQL
     CONNECT c##sb_dv_owner/$SB_DBV_PWD@$(get_db_host):$(get_db_port)/$(get_db_service $ORACLE_SID) 
     EXEC dbms_macadm.disable_dv;
-    ALTER SESSION SET CONTAINER=$SB_SECBENCH_DB;
-    EXEC dbms_macadm.disable_dv;
-
     CONN / AS SYSDBA
     STARTUP FORCE;
-    DROP USER c##sb_dv_owner CASCADE;
-    DROP USER c##sb_dv_accmgr CASCADE;
+EOFSQL
+if [ $? != 0 ]; then clean_quit 33 "sqlplus error in $SB_BENCHMARK $SB_SCRIPT_NAME"; fi 
+
+echo "INFO : Verify DB Vault in $ORACLE_SID CDB\$ROOT and $SB_SECBENCH_DB:"
+${ORACLE_HOME}/bin/sqlplus -S -L /nolog <<EOFSQL
+    CONN / AS SYSDBA
+    COL DESCRIPTION FOR A60
     SELECT * FROM DBA_DV_STATUS;
     SELECT * FROM DBA_OLS_STATUS;
     SELECT * FROM CDB_DV_STATUS;
     SELECT * FROM CDB_OLS_STATUS;
 EOFSQL
-if [ $? != 0 ]; then clean_quit 33 "sqlplus error in $SB_BENCHMARK $SB_SCRIPT_NAME"; fi 
 
+echo "INFO : Drop common DB Vault users $ORACLE_SID:"
 ${ORACLE_HOME}/bin/sqlplus -S -L /nolog <<EOFSQL
     CONNECT / AS SYSDBA
     WHENEVER SQLERROR EXIT SQL.SQLCODE;
-    ALTER SESSION SET CONTAINER=$SB_SECBENCH_DB;
-    @$SB_WORK_DIR/remove_dbv_audit.sql
+    DROP USER c##sb_dv_owner;
+    DROP USER c##sb_dv_accmgr;
 EOFSQL
-if [ $? != 0 ]; then clean_quit 33 "sqlplus error in $SB_BENCHMARK $SB_SCRIPT_NAME"; fi 
-
-${ORACLE_HOME}/bin/sqlplus -S -L /nolog <<EOFSQL
-    CONNECT / AS SYSDBA
-    WHENEVER SQLERROR EXIT SQL.SQLCODE;
-    ALTER SESSION SET CONTAINER=$SB_SECBENCH_DB;
-    @$SB_WORK_DIR/remove.sql
-EOFSQL
-if [ $? != 0 ]; then clean_quit 33 "sqlplus error in $SB_BENCHMARK $SB_SCRIPT_NAME"; fi 
-
-if [ $? != 0 ]; then clean_quit 33 "sqlplus error in $SB_BENCHMARK $SB_SCRIPT_NAME"; fi 
 
 clean_quit 0
 # --- EOF ----------------------------------------------------------------------

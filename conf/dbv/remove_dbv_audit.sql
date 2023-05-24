@@ -19,7 +19,9 @@ COL policy_name FOR A40
 COL entity_name FOR A30
 COL comments FOR A80
 
--- enable audit policy
+-- List enabled audit policies
+SELECT * FROM audit_unified_enabled_policies;
+-- disable / remove audit policy
 NOAUDIT POLICY sb_dv_SecBench;
 DROP CREATE AUDIT POLICY sb_dv_SecBench;
 -- List enabled audit policies
