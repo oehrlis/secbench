@@ -1,0 +1,59 @@
+INFO : Start sb_run.sh on host db19 at Tue May 23 11:11:36 CEST 2023
+INFO : Add local swingbench/bin folder to PATH
+INFO : found pwd file /u01/app/oracle/local/secbench/etc/.secbench_password.txt
+INFO : found pwd file /u01/app/oracle/local/secbench/etc/.oracle_password.txt
+INFO : Run SecBench on CDB19A in SBPDB_RUN
+INFO : Using the following configuration values:
+INFO : SB_SEED_DB........ : SBPDB_SEED
+INFO : SB_USE_CASES...... : regular network audit_cis tde_aes256 tde_3des168 audit_full audit_legacy audit_session tde_aes128 tde_aes256_nel tde_aria256
+INFO : SB_INTERVAL....... : 10 25 50 75 100
+INFO : SB_KEEP_PDB....... : TRUE
+INFO : SB_DBA_USER....... : pdbadmin
+INFO : SB_DBA_PASSWORD... : 
+INFO : SB_USER........... : soe
+INFO : SB_PASSWORD....... : kw5RT1CToZG3
+INFO : SB_SCALE.......... : 0.5
+INFO : [regular] =======================================================================
+INFO : Start Sec Bench for regular
+INFO : create SecBench PDB SBPDB_REGULAR from SBPDB_SEED
+
+
+
+
+
+
+
+
+
+
+
+
+Deploy the SecBench SBPDB_REGULAR from SEED
+- Create SBPDB_REGULAR .......: created
+- open SBPDB_REGULAR........: open
+- save state SBPDB_REGULAR..: done
+INFO : prepare and setup configuration for regular
+INFO : Start setup.sh for regular on host db19 at Tue May 23 11:11:54 CEST 2023
+
+Session altered.
+
+
+PL/SQL procedure successfully completed.
+
+
+PL/SQL procedure successfully completed.
+
+
+no rows selected
+
+[92mINFO : Successfully finish setup.sh[0m
+INFO : [regular] - 10 ------------------------------------------------------------------------
+INFO : [regular] create AWR snapshot in SBPDB_REGULAR
+
+Session altered.
+
+
+TSTAMP		    SNAP_ID
+---------------- ----------
+2023-05-23 11:12	  1
+

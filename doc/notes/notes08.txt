@@ -1,0 +1,16 @@
+docker exec -it -u root cdbua190 bash -l
+docker exec -it cdbua190 bash -l
+
+docker exec -it -u root cdbua190 yum install -y hostname rlwrap
+docker exec -it cdbua190 sed -i 's/30/10/' /u00/app/oracle/local/dba/etc/sidtab
+docker exec -it cdbua190 sed -i '/^if.*grid/,/^export BE_INITIALSID/d;' /home/oracle/.bash_profile
+
+docker exec -it -u root tua190 bash -l
+docker exec -it tua190 bash -l
+
+docker exec -it -u root tua190 yum install -y hostname rlwrap
+docker exec -it tua190 sed -i 's/30/10/' /u00/app/oracle/local/dba/etc/sidtab
+docker exec -it tua190 sed -i '/^if.*grid/,/^export BE_INITIALSID/d;' /home/oracle/.bash_profile
+
+sed '/^if [/,/^export BE_INITIALSID/{//!d;};' /home/oracle/.bash_profile
+sed -i '/^if.*grid/,/^export BE_INITIALSID/d;' /home/oracle/.bash_profile

@@ -1,0 +1,271 @@
+PDB2
+
+----------------------
+select key_id from v$encryption_keys;
+
+KEY_ID
+----------------------------------------------------
+AXWwne5bk09/v4gHwTE2d4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+
+1 row selected.
+
+select * from v$encryption_wallet;
+
+WRL_TYPE WRL_PARAMETER								     STATUS		WALLET_TYPE	WALLET_OR KEYSTORE FULLY_BAC CON_ID
+-------- --------------------------------------------------------------------------- ------------------ --------------- --------- -------- --------- ------
+FILE	 /u00/app/oracle/admin/CDBUA190/wallet/044C8D08E0FB113BE063020011AC3A59/tde/ OPEN		LOCAL_AUTOLOGIN SINGLE	  ISOLATED NO		  4
+
+1 row selected.
+
+5JUTOCHC3JBDHIVO8DXP
+
+oracle@cdbua190:/u00/app/oracle/admin/CDBUA190/wallet/044C8D08E0FB113BE063020011AC3A59/ [CDBUA190] cat wallet_pwd.txt | mkstore -wrl tde -list
+Oracle Secret Store Tool Release 19.0.0.0.0 - Production
+Version 19.4.0.0.0
+Copyright (c) 2004, 2023, Oracle and/or its affiliates. All rights reserved.
+
+Enter wallet password:   
+Oracle Secret Store entries: 
+ORACLE.SECURITY.DB.ENCRYPTION.AXWwne5bk09/v4gHwTE2d4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+ORACLE.SECURITY.DB.ENCRYPTION.MASTERKEY.044C8D08E0FB113BE063020011AC3A59
+ORACLE.SECURITY.ID.ENCRYPTION.
+ORACLE.SECURITY.KB.ENCRYPTION.
+ORACLE.SECURITY.KM.ENCRYPTION.AXWwne5bk09/v4gHwTE2d4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+
+oracle@cdbua190:/u00/app/oracle/admin/CDBUA190/wallet/044C8D08E0FB113BE063020011AC3A59/ [CDBUA190] cat wallet_pwd.txt | mkstore -wrl tde -viewEntry ORACLE.SECURITY.DB.ENCRYPTION.MASTERKEY.044C8D08E0FB113BE063020011AC3A59
+Oracle Secret Store Tool Release 19.0.0.0.0 - Production
+Version 19.4.0.0.0
+Copyright (c) 2004, 2023, Oracle and/or its affiliates. All rights reserved.
+
+Enter wallet password:   
+ORACLE.SECURITY.DB.ENCRYPTION.MASTERKEY.044C8D08E0FB113BE063020011AC3A59 = AXWwne5bk09/v4gHwTE2d4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+
+cat wallet_pwd.txt | mkstore -wrl tde -viewEntry ORACLE.SECURITY.KM.ENCRYPTION.AXWwne5bk09/v4gHwTE2d4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+
+oracle@cdbua190:/u00/app/oracle/admin/CDBUA190/wallet/044C8D08E0FB113BE063020011AC3A59/ [CDBUA190] cat wallet_pwd.txt | mkstore -wrl tde -viewEntry ORACLE.SECURITY.KM.ENCRYPTION.AXWwne5bk09/v4gHwTE2d4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+Oracle Secret Store Tool Release 19.0.0.0.0 - Production
+Version 19.4.0.0.0
+Copyright (c) 2004, 2023, Oracle and/or its affiliates. All rights reserved.
+
+Enter wallet password:   
+ORACLE.SECURITY.KM.ENCRYPTION.AXWwne5bk09/v4gHwTE2d4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA = 019C0001000D787B0901130F11213B1098143C000D787B0901130F11213B2038143C0000000000000003001E535953000000000000000000000000000000000000000000000000000000003300901152764A00000008001E43444255413139300000000000000000000000000000000000000000000000000001FFFFFFFF00000008001E434442554131393000000000000000000000000000000000000000000000000400000004001E5044423200000000000000000000000000000000000000000000000000005CAACA770010044C8D08E0FB113BE063020011AC3A590000000000000003001E53595300000000000000000000000000000000000000000000000000000000901152764A00000008001E43444255413139300000000000000000000000000000000000000000000000000001FFFFFFFF00000008001E434442554131393000000000000000000000000000000000000000000000000400000004001E5044423200000000000000000000000000000000000000000000000000005CAACA770010044C8D08E0FB113BE063020011AC3A5900000001
+
+cat wallet_pwd.txt | mkstore -wrl tde -viewEntry ORACLE.SECURITY.DB.ENCRYPTION.AXWwne5bk09/v4gHwTE2d4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+
+oracle@cdbua190:/u00/app/oracle/admin/CDBUA190/wallet/044C8D08E0FB113BE063020011AC3A59/ [CDBUA190] cat wallet_pwd.txt | mkstore -wrl tde -viewEntry ORACLE.SECURITY.DB.ENCRYPTION.AXWwne5bk09/v4gHwTE2d4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+Oracle Secret Store Tool Release 19.0.0.0.0 - Production
+Version 19.4.0.0.0
+Copyright (c) 2004, 2023, Oracle and/or its affiliates. All rights reserved.
+
+Enter wallet password:   
+ORACLE.SECURITY.DB.ENCRYPTION.AXWwne5bk09/v4gHwTE2d4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA = AEMAASAACAeaF3Ga+NK3gEr6llehefAi46ys84tzYXbY3xHHtu4DEADH9aINaAjupzJbzCVKvb6WBQcAeHsJARMPEQ==
+
+===========
+= CDB
+===========
+
+5JUTOCHC3JBDHIVO8DXP
+
+oracle@cdbua190:/u00/app/oracle/admin/CDBUA190/wallet/ [CDBUA190] cat wallet_pwd.txt | mkstore -wrl tde -list
+Oracle Secret Store Tool Release 19.0.0.0.0 - Production
+Version 19.4.0.0.0
+Copyright (c) 2004, 2023, Oracle and/or its affiliates. All rights reserved.
+
+Enter wallet password:   
+Oracle Secret Store entries: 
+ORACLE.SECURITY.DB.ENCRYPTION.AaJ7JhYT1k9jv8xq6NULLakAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+ORACLE.SECURITY.DB.ENCRYPTION.MASTERKEY
+ORACLE.SECURITY.ID.ENCRYPTION.
+ORACLE.SECURITY.KB.ENCRYPTION.
+ORACLE.SECURITY.KM.ENCRYPTION.AaJ7JhYT1k9jv8xq6NULLakAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+
+cat wallet_pwd.txt | mkstore -wrl tde -viewEntry ORACLE.SECURITY.DB.ENCRYPTION.MASTERKEY
+Oracle Secret Store Tool Release 19.0.0.0.0 - Production
+Version 19.4.0.0.0
+Copyright (c) 2004, 2023, Oracle and/or its affiliates. All rights reserved.
+
+Enter wallet password:   
+ORACLE.SECURITY.DB.ENCRYPTION.MASTERKEY = AaJ7JhYT1k9jv8xq6NULLakAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+
+cat wallet_pwd.txt | mkstore -wrl tde -viewEntry ORACLE.SECURITY.DB.ENCRYPTION.AaJ7JhYT1k9jv8xq6NULLakAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+Oracle Secret Store Tool Release 19.0.0.0.0 - Production
+Version 19.4.0.0.0
+Copyright (c) 2004, 2023, Oracle and/or its affiliates. All rights reserved.
+
+Enter wallet password:   
+ORACLE.SECURITY.DB.ENCRYPTION.AaJ7JhYT1k9jv8xq6NULLakAAAAAAAAAAAAAAAAAAAAAAAAAAAAA = AEMAASAAu4Pzfh0bbaHkWrwybnlMNENlMGJl5AJiDzZMXr6UP70DEACJpzfRc4DRrV8Iv6Iu+QU0BQcAeHsJARMOHw==
+
+cat wallet_pwd.txt | mkstore -wrl tde -viewEntry ORACLE.SECURITY.KM.ENCRYPTION.AaJ7JhYT1k9jv8xq6NULLakAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+
+Oracle Secret Store Tool Release 19.0.0.0.0 - Production
+Version 19.4.0.0.0
+Copyright (c) 2004, 2023, Oracle and/or its affiliates. All rights reserved.
+
+Enter wallet password:   
+ORACLE.SECURITY.KM.ENCRYPTION.AaJ7JhYT1k9jv8xq6NULLakAAAAAAAAAAAAAAAAAAAAAAAAAAAAA = 019C0001000D787B0901130E1F10EC94A0143C000D787B0901130E1F10ECA440143C0000000000000003001E535953000000000000000000000000000000000000000000000000000000003300901152764A00000008001E43444255413139300000000000000000000000000000000000000000000000000001FFFFFFFF00000008001E434442554131393000000000000000000000000000000000000000000000000100000008001E43444224524F4F5400000000000000000000000000000000000000000000000000010010FDA797FFD7307DFDE053BC2A4664B2B00000000000000003001E53595300000000000000000000000000000000000000000000000000000000901152764A00000008001E43444255413139300000000000000000000000000000000000000000000000000001FFFFFFFF00000008001E434442554131393000000000000000000000000000000000000000000000000100000008001E43444224524F4F5400000000000000000000000000000000000000000000000000010010FDA797FFD7307DFDE053BC2A4664B2B000000001
+
+select key_id from v$encryption_keys;
+
+KEY_ID
+------------------------------------------------------------------------------
+AaJ7JhYT1k9jv8xq6NULLakAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+
+select * from v$encryption_wallet;
+
+WRL_TYPE WRL_PARAMETER								     STATUS		WALLET_TYPE	WALLET_OR KEYSTORE FULLY_BAC CON_ID
+-------- --------------------------------------------------------------------------- ------------------ --------------- --------- -------- --------- ------
+FILE	 /u00/app/oracle/admin/CDBUA190/wallet/tde/				     OPEN		LOCAL_AUTOLOGIN SINGLE	  NONE	   NO		  1
+FILE										     OPEN		LOCAL_AUTOLOGIN SINGLE	  UNITED   NO		  2
+FILE										     OPEN_NO_MASTER_KEY LOCAL_AUTOLOGIN SINGLE	  UNITED   UNDEFINED	  3
+FILE	 /u00/app/oracle/admin/CDBUA190/wallet/044C8D08E0FB113BE063020011AC3A59/tde/ OPEN		LOCAL_AUTOLOGIN SINGLE	  ISOLATED NO		  4
+
+alter session set container=pdb2;
+
+create tablespace test_enc datafile '/u01/oradata/CDBUA190/PDB2/test_enc01.dbf' size 10M ENCRYPTION USING 'AES256' DEFAULT STORAGE (ENCRYPT);
+
+create table scott.emp_enc tablespace test_enc as select * from scott.emp;
+
+select owner,segment_name,segment_type from dba_segments where tablespace_name='TEST_ENC';
+
+OWNER		     SEGMENT_NAME	  SEGMENT_TYPE
+-------------------- -------------------- ------------------
+SCOTT		     EMP_ENC		  TABLE
+
+
+COLUMN wrl_type             FORMAT A8
+COLUMN wrl_parameter        FORMAT A75
+COLUMN status               FORMAT A18
+COLUMN wallet_type          FORMAT A15
+COLUMN con_id               FORMAT 99999
+SET LINESIZE 180 PAGESIZE 66
+select * from v$encryption_wallet;
+WRL_TYPE WRL_PARAMETER								     STATUS		WALLET_TYPE	WALLET_OR KEYSTORE FULLY_BAC CON_ID
+-------- --------------------------------------------------------------------------- ------------------ --------------- --------- -------- --------- ------
+FILE	 /u00/app/oracle/admin/CDBUA190/wallet/tde/				     NOT_AVAILABLE	UNKNOWN 	SINGLE	  NONE	   UNDEFINED	  1
+FILE										     NOT_AVAILABLE	UNKNOWN 	SINGLE	  UNITED   UNDEFINED	  2
+FILE										     NOT_AVAILABLE	UNKNOWN 	SINGLE	  UNITED   UNDEFINED	  3
+FILE	 /u00/app/oracle/admin/CDBUA190/wallet/044C8D08E0FB113BE063020011AC3A59/tde/ NOT_AVAILABLE	UNKNOWN 	SINGLE	  ISOLATED UNDEFINED	  4
+
+
+SQL> show pdbs
+
+    CON_ID CON_NAME			  OPEN MODE  RESTRICTED
+---------- ------------------------------ ---------- ----------
+	 4 PDB2 			  READ WRITE NO
+SQL> select * from v$encryption_wallet;
+
+WRL_TYPE WRL_PARAMETER								     STATUS		WALLET_TYPE	WALLET_OR KEYSTORE FULLY_BAC CON_ID
+-------- --------------------------------------------------------------------------- ------------------ --------------- --------- -------- --------- ------
+FILE	 /u00/app/oracle/admin/CDBUA190/wallet/044C8D08E0FB113BE063020011AC3A59/tde/ OPEN		LOCAL_AUTOLOGIN SINGLE	  ISOLATED NO		  4
+
+SQL> 
+SQL> 
+SQL> select key_id from v$encryption_keys;
+
+KEY_ID
+------------------------------------------------------------------------------
+AXWwne5bk09/v4gHwTE2d4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+
+
+SQL> select key_id from v$encryption_keys;
+
+KEY_ID
+------------------------------------------------------------------------------
+AQmv9spJIU+av8aFfgpoqm4AAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AesTDC6/1k+Mv7tr90OWpIcAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+
+oracle@cdbua190:/u00/app/oracle/admin/CDBUA190/wallet/ [CDBUA190] cat wallet_pwd.txt | mkstore -wrl tde -list
+Oracle Secret Store Tool Release 19.0.0.0.0 - Production
+Version 19.4.0.0.0
+Copyright (c) 2004, 2023, Oracle and/or its affiliates. All rights reserved.
+
+Enter wallet password:   
+Oracle Secret Store entries: 
+ORACLE.SECURITY.DB.ENCRYPTION.AesTDC6/1k+Mv7tr90OWpIcAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+ORACLE.SECURITY.DB.ENCRYPTION.AQmv9spJIU+av8aFfgpoqm4AAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+ORACLE.SECURITY.DB.ENCRYPTION.MASTERKEY
+ORACLE.SECURITY.ID.ENCRYPTION.
+ORACLE.SECURITY.KB.ENCRYPTION.
+ORACLE.SECURITY.KM.ENCRYPTION.AesTDC6/1k+Mv7tr90OWpIcAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+ORACLE.SECURITY.KM.ENCRYPTION.AQmv9spJIU+av8aFfgpoqm4AAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+
+
+cat wallet_pwd.txt | mkstore -wrl tde -viewEntry ORACLE.SECURITY.DB.ENCRYPTION.MASTERKEY
+
+
+oracle@cdbua190:/u00/app/oracle/admin/CDBUA190/wallet/ [CDBUA190] cat wallet_pwd.txt | mkstore -wrl tde -viewEntry ORACLE.SECURITY.DB.ENCRYPTION.MASTERKEY
+Oracle Secret Store Tool Release 19.0.0.0.0 - Production
+Version 19.4.0.0.0
+Copyright (c) 2004, 2023, Oracle and/or its affiliates. All rights reserved.
+
+Enter wallet password:   
+ORACLE.SECURITY.DB.ENCRYPTION.MASTERKEY = AesTDC6/1k+Mv7tr90OWpIcAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+
+select key_id from v$encryption_keys;
+SQL> select key_id from v$encryption_keys;
+
+KEY_ID
+------------------------------------------------------------------------------
+AXWwne5bk09/v4gHwTE2d4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+
+select  utl_raw.cast_to_varchar2( utl_encode.base64_encode('01'||substr(masterkeyid,1,4))) || utl_raw.cast_to_varchar2( utl_encode.base64_encode(substr(masterkeyid,5,length(masterkeyid)))) 
+FROM v$encrypted_tablespaces;
+
+select  utl_raw.cast_to_varchar2( utl_encode.base64_encode('01'||substr('75b09dee5b934f7fbf8807c131367780',1,4))) || utl_raw.cast_to_varchar2( utl_encode.base64_encode(substr('75b09dee5b934f7fbf8807c131367780',5,length('75b09dee5b934f7fbf8807c131367780')))) 
+FROM v$encrypted_tablespaces;
+
+File key structure: ena 4 flg 0x2f mkloc 1
+   key: 4c08a5d267e9c320090af3650b60abf47206a2270a1de5ce7e5e084e65e95c43
+   mkeyid: 75b09dee5b934f7fbf8807c131367780
+
+select  utl_raw.cast_to_varchar2( utl_encode.base64_encode('01'||substr('75b09dee5b934f7fbf8807c131367780',1,4))) || utl_raw.cast_to_varchar2( utl_encode.base64_encode(substr('75b09dee5b934f7fbf8807c131367780',5,length('75b09dee5b934f7fbf8807c131367780')))) 
+  2  FROM v$encrypted_tablespaces;
+
+UTL_RAW.CAST_TO_VARCHAR2(UTL_ENCODE.BASE64_ENCODE('01'||SUBSTR('75B09DEE5B934F7F
+--------------------------------------------------------------------------------
+AXWwne5bk09/v4gHwTE2d4A=
+
+
+DATA FILE #1: 
+  name #9: /u01/oradata/CDBUA190/system01CDBUA190.dbf
+
+     key: e8abac6cdf4de8fa8442e5c5e7489b2d00000000000000000000000000000000
+   mkeyid: eb130c2ebfd64f8cbfbb6bf74396a487
+select  utl_raw.cast_to_varchar2( utl_encode.base64_encode('01'||
+substr('eb130c2ebfd64f8cbfbb6bf74396a487',1,4))) || utl_raw.cast_to_varchar2( utl_encode.base64_encode(
+substr('eb130c2ebfd64f8cbfbb6bf74396a487',5,length('eb130c2ebfd64f8cbfbb6bf74396a487')))) 
+FROM v$encrypted_tablespaces;
+UTL_RAW.CAST_TO_VARCHAR2(UTL_ENCODE.BASE64_ENCODE('01'||SUBSTR('EB130C2EBFD64F8C
+--------------------------------------------------------------------------------
+AesTDC6/1k+Mv7tr90OWpIc=
+
+
+   DATA FILE #3: 
+  name #10: /u01/oradata/CDBUA190/sysaux01CDBUA190.dbf
+
+
+     key: e8abac6cdf4de8fa8442e5c5e7489b2d00000000000000000000000000000000
+   mkeyid: eb130c2ebfd64f8cbfbb6bf74396a487
+
+   DATA FILE #4: 
+  name #8: /u01/oradata/CDBUA190/undotbs01CDBUA190.dbf
+
+     key: e8abac6cdf4de8fa8442e5c5e7489b2d00000000000000000000000000000000
+   mkeyid: eb130c2ebfd64f8cbfbb6bf74396a487
+File key structure: ena 2 flg 0x6 mkloc 0
+   key: 2fda570e45152a15b6a2d7035e080bf700000000000000000000000000000000
+   mkeyid: 5d044c86aa8c4f43bf124a00d9bfb84d
+
+Tablespace #0 - SYSTEM  rel_fn:1
+File key structure: ena 2 flg 0x6 mkloc 0
+   key: 2fda570e45152a15b6a2d7035e080bf700000000000000000000000000000000
+   mkeyid: 5d044c86aa8c4f43bf124a00d9bfb84d
+
+
+
+Check table x$kcbdbk
+Clean database ( no encryption enabled )
+11g
+BITAND(FLAGS,8) == 0
+12c+
+mkloc == 0

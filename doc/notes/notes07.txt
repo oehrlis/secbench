@@ -1,0 +1,4 @@
+expdp system/3D_02E2cHjR59 schemas=cbmwb directory=local_dpdump dumpfile=MOLIS_cbmwb2cbmtb.dmp logfile=MOLIS_cbmwb2cbmtb.log
+impdp system/3D_02E2cHjR59 directory=local_dpdump dumpfile=MOLIS_cbmwb2cbmtb.dmp logfile=MOLIS_cbmwb2cbmtb_impdp.log remap_schema=cbmwb:cbmtb table_exists_action=replace
+
+

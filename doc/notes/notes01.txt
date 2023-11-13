@@ -1,0 +1,88 @@
+orapki wallet create -wallet /u01/app/oracle/admin/TDB01/wallet/tls -auto_login_only
+orapki wallet add -wallet /u01/app/oracle/admin/TDB01/wallet/tls -dn 'CN=TDB01,dc=trivadislabs,dc=com' -keysize 4096 -auto_login_only
+orapki wallet export -wallet /u01/app/oracle/admin/TDB01/wallet/tls -dn 'CN=TDB01,dc=trivadislabs,dc=com' -request /u01/app/oracle/admin/TDB01/wallet/tls/TDB01server.csr
+orapki wallet add -wallet /u01/app/oracle/admin/TDB01/wallet/tls -trusted_cert -cert /u01/app/oracle/admin/TDB01/wallet/tls/TDB01server.cer -auto_login_only
+orapki wallet add -wallet /u01/app/oracle/admin/TDB01/wallet/tls -trusted_cert -cert /u01/app/oracle/admin/TDB01/wallet/tls/trivadislabs.com.cer -auto_login_only
+orapki wallet display -wallet /u01/app/oracle/admin/TDB01/wallet/tls
+
+
+orapki wallet create -wallet /u01/app/oracle/network/wallet -auto_login_only
+orapki wallet add -wallet /u01/app/oracle/network/wallet -trusted_cert -cert /u01/app/oracle/admin/TDB01/wallet/tls/trivadislabs.com.cer -auto_login_only
+orapki wallet display -wallet /u01/app/oracle/network/wallet
+
+
+orapki wallet create -wallet /u01/app/oracle/admin/TDB01/wallet/tls -pwd SIMAV-2023 -auto_login_local
+orapki wallet add -wallet /u01/app/oracle/admin/TDB01/wallet/tls -dn 'CN=TDB01,dc=trivadislabs,dc=com' -keysize 4096 -pwd SIMAV-2023
+orapki wallet export -wallet /u01/app/oracle/admin/TDB01/wallet/tls -dn 'CN=TDB01,dc=trivadislabs,dc=com' -request /u01/app/oracle/admin/TDB01/wallet/tls/TDB01server.csr
+orapki wallet add -wallet /u01/app/oracle/admin/TDB01/wallet/tls -trusted_cert -cert /u01/app/oracle/admin/TDB01/wallet/tls/TDB01server.cer -pwd SIMAV-2023
+orapki wallet add -wallet /u01/app/oracle/admin/TDB01/wallet/tls -trusted_cert -cert /u01/app/oracle/admin/TDB01/wallet/tls/trivadislabs.com.cer -pwd SIMAV-2023
+orapki wallet display -wallet /u01/app/oracle/admin/TDB01/wallet/tls
+
+rm /u01/app/oracle/network/wallet/*
+orapki wallet create -wallet /u01/app/oracle/network/wallet -pwd SIMAV-2023 -auto_login_local
+orapki wallet add -wallet /u01/app/oracle/network/wallet -trusted_cert -cert /u01/app/oracle/admin/TDB01/wallet/tls/trivadislabs.com.cer -pwd SIMAV-2023
+orapki wallet add -wallet /u01/app/oracle/network/wallet -dn 'CN=db19,dc=trivadislabs,dc=com' -asym_alg RSA -keysize 4096 -pwd SIMAV-2023
+orapki wallet export -wallet /u01/app/oracle/network/wallet -dn 'CN=db19,dc=trivadislabs,dc=com' -request /u01/app/oracle/admin/TDB01/wallet/tls/db19.trivadislabs.com.csr
+orapki wallet add -wallet /u01/app/oracle/network/wallet -trusted_cert -cert /u01/app/oracle/admin/TDB01/wallet/tls/db19.trivadislabs.com.cer -pwd SIMAV-2023
+orapki wallet display -wallet /u01/app/oracle/network/wallet
+        
+
+orapki wallet create -wallet /u01/app/oracle/network/wallet -pwd SIMAV-2023 -auto_login_local
+orapki wallet add -wallet /u01/app/oracle/network/wallet -dn 'CN=db19,dc=trivadislabs,dc=com' -asym_alg RSA -keysize 4096 -pwd SIMAV-2023
+orapki wallet export -wallet /u01/app/oracle/network/wallet -dn 'CN=db19,dc=trivadislabs,dc=com' -request /u01/app/oracle/admin/TDB01/wallet/tls/db19.trivadislabs.com.csr
+orapki wallet add -wallet /u01/app/oracle/network/wallet -trusted_cert -cert /u01/app/oracle/admin/TDB01/wallet/tls/trivadislabs.com.cer -pwd SIMAV-2023
+orapki wallet add -wallet /u01/app/oracle/network/wallet -user_cert -cert /u01/app/oracle/admin/TDB01/wallet/tls/db19.trivadislabs.com.cer -pwd SIMAV-2023
+orapki wallet add -wallet /u01/app/oracle/network/wallet -user_cert -cert /u01/app/oracle/network/wallet/db19.trivadislabs.com.pem -pwd SIMAV-2023
+# ?? orapki wallet add -wallet /u01/app/oracle/network/wallet -trusted_cert -cert /u01/app/oracle/admin/TDB01/wallet/tls/db19.trivadislabs.com.cer -pwd SIMAV-2023
+orapki wallet remove -wallet /u01/app/oracle/network/wallet -trusted_cert -dn 'CN=db19,dc=trivadislabs,dc=com' -pwd SIMAV-2023
+orapki wallet display -wallet /u01/app/oracle/network/wallet
+orapki cert create -wallet /private/user/orapki_use/root -request /private/user/orapki_use/server/creq.txt -cert /private/user/orapki_use/server/cert.txt -validity 3650
+Oracle® Database Security Guide 19c F Managing Public Key Infrastructure (PKI) Elements https://docs.oracle.com/en/database/oracle/oracle-database/19/dbseg/using-the-orapki-utility-to-manage-pki-elements.html
+WALLET_LOCATION=  
+  (SOURCE=
+      (METHOD=file)
+      (METHOD_DATA=  
+         (DIRECTORY=/u01/app/oracle/network/wallet)))
+
+openssl verify -CAfile /u01/app/oracle/network/wallet/trivadislabs.com.pem /u01/app/oracle/network/wallet/db19.trivadislabs.com.pem
+openssl verify -verbose -x509_strict /u01/app/oracle/network/wallet/trivadislabs.com.pem /u01/app/oracle/network/wallet/db19.trivadislabs.com.pem
+openssl s_client -connect db19.trivadislabs.com:1522
+openssl s_client -connect db19.trivadislabs.com:1522 -showcerts
+sudo cp trivadislabs.com.pem /etc/pki/ca-trust/source/anchors/
+oracle@db19:/u01/app/oracle/network/wallet/ [rdbms19] sudo update-ca-trust
+certutil -ca.cert -f trivadislabs.com.cer
+certutil -config - -ping
+
+certutil -CATemplates -config "Trivadis LAB Enterprise Root CA"
+
+certreq -attrib "CertificateTemplate:WebServer" C:\u00\app\oracle\network\admin\db19.trivadislabs.com.csr C:\u00\app\oracle\network\admin\db19.trivadislabs.com.cer
+certreq -config "pfcmulab-ad00.trivadislabs.com/Trivadis LAB Enterprise Root CA" -attrib "CertificateTemplate:WebServer" C:\u00\app\oracle\network\admin\db19.trivadislabs.com.csr C:\u00\app\oracle\network\admin\db19.trivadislabs.com.cer
+
+net_service_name = (DESCRIPTION=(ADDRESS = (PROTOCOL=tcps)
+(HOST=db19)(PORT=1522)) (SECURITY=(WALLET_LOCATION=SYSTEM)) 
+(CONNECT_DATA=(SERVICE_NAME=TDB01.trivadislabs.com)))
+
+tnsping "(DESCRIPTION=(ADDRESS = (PROTOCOL=tcps)(HOST=db19)(PORT=1522)) (SECURITY=(WALLET_LOCATION=SYSTEM))(CONNECT_DATA=(SERVICE_NAME=TDB01.trivadislabs.com)))"
+tnsping "(DESCRIPTION=(ADDRESS = (PROTOCOL=tcps)(HOST=db19)(PORT=1522)) (SECURITY=(WALLET_LOCATION=/u01/app/oracle/network/wallet))(CONNECT_DATA=(SERVICE_NAME=TDB01.trivadislabs.com)))"
+
+
+sqlplus system@"(DESCRIPTION=(ADDRESS = (PROTOCOL=tcps)(HOST=db19)(PORT=1522)) (SECURITY=(WALLET_LOCATION=/u01/app/oracle/network/wallet))(CONNECT_DATA=(SERVICE_NAME=TDB01.trivadislabs.com)))"
+net_service_name = (DESCRIPTION=(ADDRESS = (PROTOCOL=tcps)
+(HOST=host_name)(PORT=port)) (SECURITY=(WALLET_LOCATION=wallet_file_directory))
+(CONNECT_DATA=(SERVICE_NAME=service_name)))
+
+        "07")   MONTH="July";;
+sqlplus system@"(DESCRIPTION=(ADDRESS = (PROTOCOL=tcps)(HOST=db19)(PORT=1522))(CONNECT_DATA=(SERVICE_NAME=TDB01.trivadislabs.com)))"
+sqlplus system@"(DESCRIPTION=(ADDRESS = (PROTOCOL=tcps)(HOST=db19)(PORT=1522)) (SECURITY=(WALLET_LOCATION=SYSTEM))(CONNECT_DATA=(SERVICE_NAME=TDB01.trivadislabs.com)))"
+sqlplus system@"(DESCRIPTION=(ADDRESS = (PROTOCOL=tcps)(HOST=db19)(PORT=1522)) (SECURITY=(WALLET_LOCATION=/u01/app/oracle/network/wallet))(CONNECT_DATA=(SERVICE_NAME=TDB01.trivadislabs.com)))"
+
+
+ktutil
+addent -password -p oracle/db19.trivadislabs.com@TRIVADISLABS.COM -k 3 -e aes256-cts
+addent -password -p oracle/db19.trivadislabs.com@TRIVADISLABS.COM -k 3 -e aes128-cts
+wkt /u01/app/oracle/network/admin/db19.trivadislabs.com.keytab.ktutil
+q
+
+Unleash the Power of the User Home SQLNet Config
+
+Deploy Oracle TLS encryption for unbreakable SQLNet security

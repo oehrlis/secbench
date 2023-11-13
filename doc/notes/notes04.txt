@@ -1,0 +1,35 @@
+SQL> alter session set container=pdb2a;
+
+Session altered.
+
+SQL> show parameter TDE_CONFIGURATION
+
+NAME                TYPE        VALUE
+------------------- ----------- ------------------------------
+tde_configuration   string
+SQL> ALTER SYSTEM SET TDE_CONFIGURATION='KEYSTORE_CONFIGURATION=FILE' scope=both;
+
+System altered.
+
+SQL> show parameter TDE_CONFIGURATION
+
+NAME                TYPE        VALUE
+------------------- ----------- ------------------------------
+tde_configuration   string      KEYSTORE_CONFIGURATION=FILE
+SQL> SELECT * FROM v$encryption_wallet;
+
+WRL_PARAMETER   WRL_TYPE                                                                    STATUS              WALLET_TYPE     WALLET_OR   KEYSTORE    FULLY_BAC   CON_ID
+--------------- --------------------------------------------------------------------------- ------------------- --------------- ----------- ----------- ----------- ------
+FILE            /u01/app/oracle/admin/CDB19A/wallet/FEB47B98A032BDF1E0531301000A4F69/tde/   OPEN_NO_MASTER_KEY  LOCAL_AUTOLOGIN SINGLE      ISOLATED    UNDEFINED        5
+
+
+SQL> ALTER SYSTEM RESET TDE_CONFIGURATION  scope=both;
+
+System altered.
+
+SQL> SELECT * FROM v$encryption_wallet;
+
+
+WRL_PARAMETER   WRL_TYPE                                                                    STATUS              WALLET_TYPE     WALLET_OR   KEYSTORE    FULLY_BAC   CON_ID
+--------------- --------------------------------------------------------------------------- ------------------- --------------- ----------- ----------- ----------- ------
+FILE                                                                                        OPEN_NO_MASTER_KEY  LOCAL_AUTOLOGIN SINGLE      UNITED      UNDEFINED        5

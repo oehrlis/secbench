@@ -1,0 +1,30 @@
+ docker-compose down cdbua190
+ rm -rf audit/cdbua190/
+ docker-compose up -d cdbua190
+ docker-compose logs -f
+ docker-compose ps
+for i in cdbua190; do   
+    docker exec -it -u root $i yum install -y hostname rlwrap;
+    docker exec -it $i sed -i 's/30/10/' /u00/app/oracle/local/dba/etc/sidtab;
+    docker exec -it $i sed -i '/^if.*grid/,/^export BE_INITIALSID/d;' /home/oracle/.bash_profile;
+    docker exec -it $i rm -rf /u00/app/oracle/local/oradba/sql
+    docker exec -it $i cat /u00/app/oracle/admin/CDBUA190/etc/CDBUA190_password.txt 
+done
+docker cp -a ~/Development/github/oehrlis/oradba/sql cdbua190:/u00/app/oracle/local/oradba/
+docker exec -it cdbua190 bash -l
+
+tar zcvf audit/cdbua190.tgz audit/cdbua190/
+docker-compose start cdbua190
+docker exec -it $i cat /u00/app/oracle/admin/CDBUA190/etc/CDBUA190_password.txt
+docker-compose ps
+
+
+ docker ps
+  573  docker exec -it cdbua190 bash -l
+  574  docker-compose down cdbua190
+  575  rm -rf audit/cdbua190/
+  576  docker-compose up -d cdbua190
+
+ADMINISTER KEY MANAGEMENT MERGE KEYSTORE '/u01/app/oracle/admin/VP11C014/wallet/tde_new' INTO EXISTING KEYSTORE '/u01/app/oracle/admin/VP11C014/wallet/tde' IDENTIFIED BY "Sommer#2020" WITH BACKUP;
+
+ADMINISTER KEY MANAGEMENT USE KEY 'AWLnCxjgd0+bvwsoIhMYTiUAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' IDENTIFIED BY "Sommer#2020" WITH BACKUP;

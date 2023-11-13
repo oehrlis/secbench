@@ -1,0 +1,8 @@
+xtExNM7s.KRBU6wfPGf3
+
+select  utl_raw.cast_to_varchar2( utl_encode.base64_encode('01'||substr(masterkeyid,1,4))) || utl_raw.cast_to_varchar2( utl_encode.base64_encode(substr(masterkeyid,5,length(masterkeyid)))) 
+FROM v$encrypted_tablespaces;
+
+select  utl_raw.cast_to_varchar2( utl_encode.base64_encode('01'||substr('7fcdb2b8b73ff06dc6d1b4ebdfff0460',1,4))) || utl_raw.cast_to_varchar2( utl_encode.base64_encode(substr('7fcdb2b8b73ff06dc6d1b4ebdfff0460',5,length('7fcdb2b8b73ff06dc6d1b4ebdfff0460')))) 
+FROM v$encrypted_tablespaces;
+

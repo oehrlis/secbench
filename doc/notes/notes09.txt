@@ -1,0 +1,22 @@
+@idenc_wroot
+startup force;
+@csenc_swkeystore
+startup force;
+@csenc_master
+startup force;
+@ssenc_info
+
+alter session set container=pdb1;
+@csenc_master
+alter pluggable database close;
+alter pluggable database open;
+@ssenc_info
+
+alter session set container=pdb2;
+@csenc_swkeystore
+alter pluggable database close;
+alter pluggable database open;
+@csenc_master
+alter pluggable database close;
+alter pluggable database open;
+@ssenc_info
