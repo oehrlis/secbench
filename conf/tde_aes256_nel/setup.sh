@@ -70,7 +70,7 @@ ${ORACLE_HOME}/bin/sqlplus -S -L /nolog <<EOFSQL
     ALTER SYSTEM SET "_use_platform_encryption_lib" = FALSE SCOPE = spfile;
     STARTUP FORCE;
 EOFSQL
-if [ $? != 0 ]; then clean_quit 33 "sqlplus error in $SB_BENCHMARK $SB_SCRIPT_NAME"; fi 
+if [ $? != 0 ]; then exit_with_status 33 "sqlplus error in $SB_BENCHMARK $SB_SCRIPT_NAME"; fi 
 
 echo "INFO : Configure TDE in the PDB $SB_SECBENCH_DB"
 ${ORACLE_HOME}/bin/sqlplus -S -L /nolog <<EOFSQL
@@ -80,7 +80,7 @@ ${ORACLE_HOME}/bin/sqlplus -S -L /nolog <<EOFSQL
     ALTER SYSTEM SET encrypt_new_tablespaces = ALWAYS;
     @$SB_WORK_DIR/setup.sql
 EOFSQL
-if [ $? != 0 ]; then clean_quit 33 "sqlplus error in $SB_BENCHMARK $SB_SCRIPT_NAME"; fi 
+if [ $? != 0 ]; then exit_with_status 33 "sqlplus error in $SB_BENCHMARK $SB_SCRIPT_NAME"; fi 
 
-clean_quit 0
+exit_with_status 0
 # --- EOF ----------------------------------------------------------------------

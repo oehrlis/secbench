@@ -71,7 +71,7 @@ ${ORACLE_HOME}/bin/sqlplus -S -L /nolog <<EOFSQL
     WHENEVER SQLERROR EXIT SQL.SQLCODE;
     ALTER SYSTEM RESET audit_trail SCOPE=SPFILE;
 EOFSQL
-if [ $? != 0 ]; then clean_quit 33 "sqlplus error in $SB_BENCHMARK $SB_SCRIPT_NAME"; fi 
+if [ $? != 0 ]; then exit_with_status 33 "sqlplus error in $SB_BENCHMARK $SB_SCRIPT_NAME"; fi 
 
 echo "INFO : Stop Database ${ORACLE_SID}:"
 ${ORACLE_HOME}/bin/sqlplus -S -L /nolog <<EOFSQL
@@ -80,7 +80,7 @@ ${ORACLE_HOME}/bin/sqlplus -S -L /nolog <<EOFSQL
     SHUTDOWN IMMEDIATE;
     EXIT;
 EOFSQL
-if [ $? != 0 ]; then clean_quit 33 "sqlplus error in $SB_BENCHMARK $SB_SCRIPT_NAME"; fi 
+if [ $? != 0 ]; then exit_with_status 33 "sqlplus error in $SB_BENCHMARK $SB_SCRIPT_NAME"; fi 
 
 echo "INFO : Relink Database ${ORACLE_SID} to enable unified audit:"
 cd $ORACLE_HOME/rdbms/lib
@@ -93,7 +93,7 @@ ${ORACLE_HOME}/bin/sqlplus -S -L /nolog <<EOFSQL
     SELECT value FROM v\$option WHERE parameter = 'Unified Auditing';
     EXIT;
 EOFSQL
-if [ $? != 0 ]; then clean_quit 33 "sqlplus error in $SB_BENCHMARK $SB_SCRIPT_NAME"; fi 
+if [ $? != 0 ]; then exit_with_status 33 "sqlplus error in $SB_BENCHMARK $SB_SCRIPT_NAME"; fi 
 
 ${ORACLE_HOME}/bin/sqlplus -S -L /nolog <<EOFSQL
     CONNECT / AS SYSDBA
@@ -101,7 +101,7 @@ ${ORACLE_HOME}/bin/sqlplus -S -L /nolog <<EOFSQL
     ALTER SESSION SET CONTAINER=$SB_SECBENCH_DB;
     @$SB_WORK_DIR/remove.sql
 EOFSQL
-if [ $? != 0 ]; then clean_quit 33 "sqlplus error in $SB_BENCHMARK $SB_SCRIPT_NAME"; fi 
+if [ $? != 0 ]; then exit_with_status 33 "sqlplus error in $SB_BENCHMARK $SB_SCRIPT_NAME"; fi 
 
-clean_quit 0
+exit_with_status 0
 # --- EOF ----------------------------------------------------------------------

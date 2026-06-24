@@ -78,14 +78,14 @@ ${ORACLE_HOME}/bin/sqlplus -S -L /nolog <<EOFSQL
     ALTER SESSION SET CONTAINER=$SB_SECBENCH_DB;
     @$SB_WORK_DIR/network.sql
 EOFSQL
-if [ $? != 0 ]; then clean_quit 33 "sqlplus error in $SB_BENCHMARK $SB_SCRIPT_NAME"; fi 
+if [ $? != 0 ]; then exit_with_status 33 "sqlplus error in $SB_BENCHMARK $SB_SCRIPT_NAME"; fi 
 
 echo "INFO : Delete DB Vault Realms in $SB_SECBENCH_DB:"
 ${ORACLE_HOME}/bin/sqlplus -S -L /nolog <<EOFSQL
     CONNECT c##sb_dv_owner/$SB_DBV_PWD@$(get_db_host):$(get_db_port)/$(get_db_service $SB_SECBENCH_DB)
     @$SB_WORK_DIR/config_dbvault.sql
 EOFSQL
-if [ $? != 0 ]; then clean_quit 33 "sqlplus error in $SB_BENCHMARK $SB_SCRIPT_NAME"; fi 
+if [ $? != 0 ]; then exit_with_status 33 "sqlplus error in $SB_BENCHMARK $SB_SCRIPT_NAME"; fi 
 
 echo "INFO : Remove DB Vault in $SB_SECBENCH_DB:"
 ${ORACLE_HOME}/bin/sqlplus -S -L /nolog <<EOFSQL
@@ -95,7 +95,7 @@ ${ORACLE_HOME}/bin/sqlplus -S -L /nolog <<EOFSQL
     ALTER SESSION SET CONTAINER=$SB_SECBENCH_DB;
     STARTUP FORCE;
 EOFSQL
-if [ $? != 0 ]; then clean_quit 33 "sqlplus error in $SB_BENCHMARK $SB_SCRIPT_NAME"; fi 
+if [ $? != 0 ]; then exit_with_status 33 "sqlplus error in $SB_BENCHMARK $SB_SCRIPT_NAME"; fi 
 
 echo "INFO : Remove DB Vault in $ORACLE_SID:"
 ${ORACLE_HOME}/bin/sqlplus -S -L /nolog <<EOFSQL
@@ -104,7 +104,7 @@ ${ORACLE_HOME}/bin/sqlplus -S -L /nolog <<EOFSQL
     CONN / AS SYSDBA
     STARTUP FORCE;
 EOFSQL
-if [ $? != 0 ]; then clean_quit 33 "sqlplus error in $SB_BENCHMARK $SB_SCRIPT_NAME"; fi 
+if [ $? != 0 ]; then exit_with_status 33 "sqlplus error in $SB_BENCHMARK $SB_SCRIPT_NAME"; fi 
 
 echo "INFO : Verify DB Vault in $ORACLE_SID CDB\$ROOT and $SB_SECBENCH_DB:"
 ${ORACLE_HOME}/bin/sqlplus -S -L /nolog <<EOFSQL
@@ -124,5 +124,5 @@ ${ORACLE_HOME}/bin/sqlplus -S -L /nolog <<EOFSQL
     DROP USER c##sb_dv_accmgr;
 EOFSQL
 
-clean_quit 0
+exit_with_status 0
 # --- EOF ----------------------------------------------------------------------

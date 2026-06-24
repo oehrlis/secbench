@@ -72,7 +72,7 @@ ${ORACLE_HOME}/bin/sqlplus -S -L /nolog <<EOFSQL
     ALTER SYSTEM SET encrypt_new_tablespaces = ALWAYS;
     @$SB_WORK_DIR/setup.sql
 EOFSQL
-if [ $? != 0 ]; then clean_quit 33 "sqlplus error in $SB_BENCHMARK $SB_SCRIPT_NAME"; fi 
+if [ $? != 0 ]; then exit_with_status 33 "sqlplus error in $SB_BENCHMARK $SB_SCRIPT_NAME"; fi 
 
-clean_quit 0
+exit_with_status 0
 # --- EOF ----------------------------------------------------------------------

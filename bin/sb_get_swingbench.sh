@@ -2,16 +2,23 @@
 # ------------------------------------------------------------------------------
 # OraDBA - Oracle Database Infrastructure and Security, 5630 Muri, Switzerland
 # ------------------------------------------------------------------------------
-# Name.......: sb_setup_seed.sh
+# Name.......: sb_get_swingbench.sh
 # Author.....: Stefan Oehrli (oes) stefan.oehrli@oradba.com
 # Editor.....: Stefan Oehrli
-# Date.......: 2023.05.19
+# Date.......: 2023.11.15
 # Revision...: 
 # Purpose....: Script to download and unpack lateest swingbench
 # Notes......: --
 # Reference..: https://github.com/oehrlis/secbench
-# License....: Apache License Version 2.0, January 2004 as shown
-#              at http://www.apache.org/licenses/
+# License....: Licensed under the Apache License, Version 2.0 (the "License");
+#              you may not use this file except in compliance with the License.
+#              You may obtain a copy of the License at
+#              http://www.apache.org/licenses/LICENSE-2.0
+#              Unless required by applicable law or agreed to in writing, software
+#              distributed under the License is distributed on an "AS IS" BASIS,
+#              WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#              See the License for the specific language governing permissions and
+#              limitations under the License.
 # ------------------------------------------------------------------------------
 # - Customization --------------------------------------------------------------
 DEFAULT_SWINGBENCH_URL="https://www.dominicgiles.com/site_downloads/swingbenchlatest.zip"        # default swingbench download url
@@ -47,8 +54,6 @@ touch $LOGFILE 2>/dev/null
 exec &> >(tee -a "$LOGFILE")                # Open standard out at `$LOG_FILE` for write.  
 exec 2>&1  
 
-echo "INFO : Start $SB_SCRIPT_NAME on host $(hostname) at $(date)"
-
 # source common variables and functions from sb_functions.sh
 if [ -f ${SB_BIN_DIR}/sb_functions.sh ]; then
     . ${SB_BIN_DIR}/sb_functions.sh
@@ -77,13 +82,15 @@ fi
 # - EOF Initialization ---------------------------------------------------------
  
 # - Main -----------------------------------------------------------------------
-echo "INFO : Download latest swingbench from $SB_SWINGBENCH_URL"
-curl $CURL_SILENT -Lf "$SB_SWINGBENCH_URL" -o "$SB_BASE/swingbench.zip" || clean_quit 33 curl
+log_message INFO "INFO : Start $SB_SCRIPT_NAME on host $(hostname) at $(date)"
+
+log_message INFO "INFO : Download latest swingbench from $SB_SWINGBENCH_URL"
+curl $CURL_SILENT -Lf "$SB_SWINGBENCH_URL" -o "$SB_BASE/swingbench.zip" || exit_with_status 33 curl
 
 # check if we do have a swingbench 
 if [ -d "$SB_BASE/swingbench" ]; then
-    echo_warn "WARN : swingbench folder already exists in $SB_BASE."
-    echo_warn "WARN : archive current folder to $SB_BASE/swingbench_$TIMESTAMP.tgz"
+    log_message WARN "WARN : swingbench folder already exists in $SB_BASE."
+    log_message WARN "WARN : archive current folder to $SB_BASE/swingbench_$TIMESTAMP.tgz"
     CURRENT_DIR=$(pwd)
     cd $SB_BASE
     tar $VERBOSE_FLAG -zcf "swingbench_$TIMESTAMP.tgz" swingbench
@@ -92,9 +99,9 @@ if [ -d "$SB_BASE/swingbench" ]; then
 fi
 
 # unpack new swingbench
-echo "INFO : Unpack swingbench to $SB_BASE"
-unzip $UNZIP_QUIET "$SB_BASE/swingbench.zip" -d "$SB_BASE"  || clean_quit 33 unzip
+log_message INFO "INFO : Unpack swingbench to $SB_BASE"
+unzip $UNZIP_QUIET "$SB_BASE/swingbench.zip" -d "$SB_BASE"  || exit_with_status 33 unzip
 
 rm "$SB_BASE/swingbench.zip"                # remove download
-clean_quit 0                                # we are done, successfully quit
+exit_with_status 0                                # we are done, successfully quit
 # --- EOF ----------------------------------------------------------------------

@@ -75,7 +75,7 @@ ${ORACLE_HOME}/bin/sqlplus -S -L /nolog <<EOFSQL
     ALTER USER $SB_USER IDENTIFIED BY $SB_PASSWORD;
     @$SB_WORK_DIR/remove.sql
 EOFSQL
-if [ $? != 0 ]; then clean_quit 33 "sqlplus error in $SB_BENCHMARK $SB_SCRIPT_NAME"; fi 
+if [ $? != 0 ]; then exit_with_status 33 "sqlplus error in $SB_BENCHMARK $SB_SCRIPT_NAME"; fi 
 
-clean_quit 0
+exit_with_status 0
 # --- EOF ----------------------------------------------------------------------

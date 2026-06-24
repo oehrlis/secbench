@@ -14,28 +14,28 @@
 #              at http://www.apache.org/licenses/
 # ------------------------------------------------------------------------------
 # - Customization --------------------------------------------------------------
-DEFAULT_SB_SEED_DB="sbpdb_seed"     # default name for the SecBench seed database
-DEFAULT_SB_SECBENCH_DB="sbpdb_run"  # default name for the SecBench PDB
+DEFAULT_SB_SEED_DB="sbseed"         # default name for the SecBench seed database
+DEFAULT_SB_SECBENCH_DB="sbrun"      # default name for the SecBench PDB
 DEFAULT_SB_PASSWORD=""              # default value for the default password
 DEFAULT_SB_KEEP_PDB="FALSE"         # default value for flag to keep pdbs of each test
 # - End of Customization -------------------------------------------------------
 
 # - Default Values -------------------------------------------------------------
 # source genric environment variables and functions
-export SB_SCRIPT_NAME=$(basename ${BASH_SOURCE[0]})
+export SB_SCRIPT_NAME=$(basename "${BASH_SOURCE[0]}")
 export SB_BIN_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-export SB_ETC_DIR="$(dirname ${SB_BIN_DIR})/etc"
-export SB_LOG_DIR="$(dirname ${SB_BIN_DIR})/log"
-
+export SB_ETC_DIR="$(dirname "${SB_BIN_DIR}")/etc"
+export SB_LOG_DIR="$(dirname "${SB_BIN_DIR}")/log"
+LOCAL_CONFIG_FILE=""
 # define logfile and logging
-export LOG_BASE=${LOG_BASE:-"$SB_LOG_DIR"}  # Use script directory as default logbase
-# Define Logfile but first reset LOG_BASE if directory does not exists
-if [ ! -d ${LOG_BASE} ] || [ ! -w ${LOG_BASE} ] ; then
-    echo "INFO : set LOG_BASE to /tmp"
+export LOG_BASE="${LOG_BASE:-"$SB_LOG_DIR"}"  # Use script directory as default logbase
+# Define Logfile but first reset LOG_BASE if directory does not exist
+if [[ ! -d "${LOG_BASE}" ]] || [[ ! -w "${LOG_BASE}" ]]; then
+    log_message "INFO" "set LOG_BASE to /tmp"
     export LOG_BASE="/tmp"
 fi
 TIMESTAMP=$(date "+%Y.%m.%d_%H%M%S")
-readonly LOGFILE="$LOG_BASE/$(basename $SB_SCRIPT_NAME .sh)_$TIMESTAMP.log"
+readonly LOGFILE="${LOG_BASE}/$(basename "${SB_SCRIPT_NAME}" .sh)_${TIMESTAMP}.log"
 
 # define a few constants / string variables
 SB_SETUP="setup.sh"
@@ -93,7 +93,7 @@ $((get_list_of_config && echo "Command line parameter")|cat -b)
 
 EOI
     dump_runtime_config     # dump current tool specific environment in debug mode
-    clean_quit ${error} ${error_value}  
+    exit_with_status ${error} ${error_value}  
 }
 
 # ------------------------------------------------------------------------------
@@ -115,7 +115,7 @@ function list_benchmarks() {
         fi
         printf '%s%s %s\n' "${bench}" "${padding:${#bench}}: " "${title}"
     done
-    clean_quit 0
+    exit_with_status 0
 }
 # - EOF Functions --------------------------------------------------------------
 
@@ -134,167 +134,191 @@ exec 2>&1
 echo "INFO : Start $SB_SCRIPT_NAME on host $(hostname) at $(date)"
 
 # source common variables and functions from sb_functions.sh
-if [ -f ${SB_BIN_DIR}/sb_functions.sh ]; then
-    . ${SB_BIN_DIR}/sb_functions.sh
+if [[ -f "${SB_BIN_DIR}/sb_functions.sh" ]]; then
+    . "${SB_BIN_DIR}/sb_functions.sh"
 else
-    echo "ERROR: Can not find common functions ${SB_BIN_DIR}/sb_functions.sh"
+    echo "ERROR: Cannot find common functions ${SB_BIN_DIR}/sb_functions.sh"
     exit 5
 fi
 
 trap on_term TERM SEGV      # handle TERM SEGV using function on_term
 trap on_int INT             # handle INT using function on_int
-load_config                 # load configur26ation files. File list in SB_CONFIG_FILES
 
 # update patch with swingbench if it is available in secbench folder
 if [ -d "$SB_BASE/swingbench" ]; then
-    echo "INFO : Add local swingbench/bin folder to PATH"
+    log_message INFO "INFO : Add local swingbench/bin folder to PATH"
     update_path $SB_BASE/swingbench/bin
 else
-    echo_warn "WARN : can not find local swingbench folder below $SB_BASE"
-    echo_warn "WARN : make sure you swingbench is accessible via PATH"
-    echo_warn "WARN : other wise use sb_get_swingbench.sh to download a local swingbench copy"
+    log_message WARN "WARN : can not find local swingbench folder below $SB_BASE"
+    log_message WARN "WARN : make sure you swingbench is accessible via PATH"
+    log_message WARN "WARN : other wise use sb_get_swingbench.sh to download a local swingbench copy"
 fi
 
 check_tools             # check if we do have the required tools available
-dump_runtime_config     # dump current tool specific environment in debug mode
+load_config             # load configuration files. File list in SB_CONFIG_FILES
 
 # get options
-while getopts hvdLkFPnB:E: CurOpt; do
-    case ${CurOpt} in
-        h) Usage 0;;
-        v) TVDLDAP_VERBOSE="TRUE" ;;
-        d) TVDLDAP_DEBUG="TRUE" ;;
-        n) SB_DRYRUN="TRUE";;
-        F) SB_FORCE="TRUE";; 
-        P) SB_PREPARED="TRUE";; 
-        L) list_benchmarks;; 
-        B) SB_USE_CASES=$(echo $OPTARG | tr "," " ");;
-        k) SB_KEEP_PDB="TRUE";;
-        E) clean_quit "${OPTARG}";;
-        *) Usage 2 $*;;
+while getopts "hvqdkFPC:LnB:E:" CurOpt; do
+    case "${CurOpt}" in
+        h) Usage 0 ;;
+        v) VERBOSE=1 ;;
+        d) DEBUG=1; VERBOSE=1 ;;
+        q) QUIET=1; VERBOSE=''; DEBUG='' ;;
+        k) SB_KEEP_PDB="TRUE" ;;
+        F) SB_FORCE="TRUE" ;;
+        P) SB_PREPARED="TRUE" ;;
+        C) LOCAL_CONFIG_FILE="${OPTARG}" ;;
+        L) list_benchmarks ;;
+        n) SB_DRYRUN="TRUE" ;;
+        B) SB_USE_CASES=$(echo "${OPTARG}" | tr "," " ") ;;
+        E) exit_with_status "${OPTARG}" ;;
+        *) Usage 2 "$*" ;;
     esac
 done
 
+
+if [[ -n "$LOCAL_CONFIG_FILE" && -f "$LOCAL_CONFIG_FILE" ]]; then
+    log_message DEBUG "DEBUG: source configuration file ${config}"
+    . "${LOCAL_CONFIG_FILE}"
+    export SB_CONFIG_FILES="$SB_CONFIG_FILES,${LOCAL_CONFIG_FILE}"
+else
+    log_message WARN "WARN : Can not access config file ${LOCAL_CONFIG_FILE}."
+fi
+
 # Default values
-export SB_KEEP_PDB=${SB_KEEP_PDB:-$DEFAULT_SB_KEEP_PDB}
-export SB_SEED_DB=${SB_SEED_DB:-$DEFAULT_SB_SEED_DB}
-export SB_SECBENCH_DB=${SB_SECBENCH_DB:-$DEFAULT_SB_SECBENCH_DB}
-export SB_PASSWORD=${SB_PASSWORD:-$DEFAULT_SB_PASSWORD}
-export SB_DBA_PASSWORD=${SB_DBA_PASSWORD:-$DEFAULT_SB_DBA_PASSWORD}
-export SB_DBA_USER=${SB_DBA_USER:-$DEFAULT_SB_DBA_USER}
-export SB_USER=${SB_USER:-$DEFAULT_SB_USER}
-export SB_SCALE=${SB_SCALE:-$DEFAULT_SB_SCALE}
+export SB_KEEP_PDB="${SB_KEEP_PDB:-"$DEFAULT_SB_KEEP_PDB"}"
+export SB_SEED_DB="${SB_SEED_DB:-"$DEFAULT_SB_SEED_DB"}"
+export SB_SECBENCH_DB="${SB_SECBENCH_DB:-"$DEFAULT_SB_SECBENCH_DB"}"
+export SB_PASSWORD="${SB_PASSWORD:-"$DEFAULT_SB_PASSWORD"}"
+export SB_DBA_PASSWORD="${SB_DBA_PASSWORD:-"$DEFAULT_SB_DBA_PASSWORD"}"
+export SB_DBA_USER="${SB_DBA_USER:-"$DEFAULT_SB_DBA_USER"}"
+export SB_USER="${SB_USER:-"$DEFAULT_SB_USER"}"
+export SB_SCALE="${SB_SCALE:-"$DEFAULT_SB_SCALE"}"
+
+dump_runtime_config     # dump current tool specific environment in debug mode
 
 # convert to upper case
-export SB_SEED_DB=${SB_SEED_DB^^}
-export SB_SECBENCH_DB=${SB_SECBENCH_DB^^}
+export SB_SEED_DB="${SB_SEED_DB^^}"
+export SB_SECBENCH_DB="${SB_SECBENCH_DB^^}"
 
 # get secbench password
 if [ -z "$SB_PASSWORD" ]; then
     if [ -f "$SB_ETC_DIR/.${SB_BASE_NAME}_password.txt" ]; then
-        echo "INFO : found pwd file $SB_ETC_DIR/.${SB_BASE_NAME}_password.txt"
+        log_message INFO "INFO : found pwd file $SB_ETC_DIR/.${SB_BASE_NAME}_password.txt"
         SB_PASSWORD=$(cat $SB_ETC_DIR/.${SB_BASE_NAME}_password.txt)
     else
-        clean_quit 28 "SOE Schema"
+        exit_with_status 28 "SOE Schema"
     fi
 fi
 
 # get OS user password
 if [ -z "$SB_OS_PWD" ]; then
     if [ -f "$SB_ETC_DIR/.${SB_OS_USER}_password.txt" ]; then
-        echo "INFO : found pwd file $SB_ETC_DIR/.${SB_OS_USER}_password.txt"
+        log_message INFO "INFO : found pwd file $SB_ETC_DIR/.${SB_OS_USER}_password.txt"
         SB_OS_PWD=$(cat $SB_ETC_DIR/.${SB_OS_USER}_password.txt)
     else
-        clean_quit 28 "SOE $SB_OS_USER"
+        exit_with_status 28 "$SB_OS_USER"
+    fi
+fi
+
+# get DBA user password
+if [[ -n "${SB_DBA_USER}" && -z "${SB_DBA_PASSWORD}" ]]; then
+    log_message INFO "INFO : SB_DBA_USER is defined check for a password..."
+    if [ -f "$SB_ETC_DIR/.${SB_DBA_USER}_password.txt" ]; then
+        log_message INFO "INFO : found pwd file $SB_ETC_DIR/.${SB_DBA_USER}_password.txt"
+        SB_DBA_PASSWORD=$(cat $SB_ETC_DIR/.${SB_DBA_USER}_password.txt)
+    else
+        exit_with_status 28 "$SB_DBA_USER"
     fi
 fi
 
 # create output folder
-mkdir -p $SB_OUTPUT_DIR
+mkdir -p "${SB_OUTPUT_DIR}"
 
 # - EOF Initialization ---------------------------------------------------------
 
 # - Main -----------------------------------------------------------------------
 
 set +o errexit                              # temporary disable errexit
-echo "INFO : Run SecBench on $ORACLE_SID in $SB_SECBENCH_DB"
-echo "INFO : Using the following configuration values:"
-echo "INFO : SB_SEED_DB........ : $SB_SEED_DB"
-echo "INFO : SB_USE_CASES...... : $SB_USE_CASES"
-echo "INFO : SB_INTERVAL....... : $SB_INTERVAL"
-echo "INFO : SB_KEEP_PDB....... : $SB_KEEP_PDB"
-echo "INFO : SB_DBA_USER....... : $SB_DBA_USER"
-echo "INFO : SB_DBA_PASSWORD... : $SB_DBA_PASSWORD"
-echo "INFO : SB_USER........... : $SB_USER"
-echo "INFO : SB_PASSWORD....... : $SB_PASSWORD"
-echo "INFO : SB_SCALE.......... : $SB_SCALE"
+log_message INFO "INFO : Run SecBench on $ORACLE_SID in $SB_SECBENCH_DB"
+log_message INFO "INFO : Using the following configuration values:"
+log_message INFO "INFO : SB_SEED_DB........ : $SB_SEED_DB"
+log_message INFO "INFO : SB_USE_CASES...... : $SB_USE_CASES"
+log_message INFO "INFO : SB_INTERVAL....... : $SB_INTERVAL"
+log_message INFO "INFO : SB_KEEP_PDB....... : $SB_KEEP_PDB"
+log_message INFO "INFO : SB_DBA_USER....... : $SB_DBA_USER"
+log_message INFO "INFO : SB_DBA_PASSWORD... : $SB_DBA_PASSWORD"
+log_message INFO "INFO : SB_USER........... : $SB_USER"
+log_message INFO "INFO : SB_PASSWORD....... : $SB_PASSWORD"
+log_message INFO "INFO : SB_SCALE.......... : $SB_SCALE"
 
-for bench in $SB_USE_CASES; do
-    echo "INFO : [$bench] ======================================================================="
-    echo "INFO : Start Sec Bench for $bench"
-    if [ -d "$SB_CONF_DIR/$bench" ] && [ -x "$SB_CONF_DIR/$bench/$SB_SETUP" ] && [ -x "$SB_CONF_DIR/$bench/$SB_REMOVE" ]; then
-
-        if [ ${SB_KEEP_PDB} == "TRUE" ]; then
-            SB_SECBENCH_DB="SBPDB_${bench^^}"
-            if pdb_exists $SB_SECBENCH_DB; then
-                if force_enabled; then
-                    echo "INFO : recreate SecBench PDB $SB_SECBENCH_DB from $SB_SEED_DB"
-                    drop_pdb $SB_SECBENCH_DB
-                    create_pdb $SB_SEED_DB $SB_SECBENCH_DB
+if pdb_exists $SB_SEED_DB; then
+    for bench in $SB_USE_CASES; do
+        log_message INFO "INFO : [$bench] ======================================================================="
+        log_message INFO "INFO : Start Sec Bench for $bench"
+        if [[ -d "${SB_CONF_DIR}/${bench}" ]] && [[ -x "${SB_CONF_DIR}/${bench}/${SB_SETUP}" ]] && [[ -x "${SB_CONF_DIR}/${bench}/${SB_REMOVE}" ]]; then
+            if [[ ${SB_KEEP_PDB} == "TRUE" ]]; then
+                SB_SECBENCH_DB="SBPDB_${bench^^}"
+                if pdb_exists $SB_SECBENCH_DB; then
+                    if force_enabled; then
+                        log_message INFO "INFO : recreate SecBench PDB $SB_SECBENCH_DB from $SB_SEED_DB"
+                        drop_pdb $SB_SECBENCH_DB
+                        create_pdb $SB_SEED_DB $SB_SECBENCH_DB
+                    else
+                        exit_with_status 40 $SB_SECBENCH_DB
+                    fi
+                elif prepared_enabled; then
+                    log_message INFO "INFO : SecBench PDB $SB_SECBENCH_DB prepared. No setup performed"
                 else
-                    clean_quit 40 $SB_SECBENCH_DB
+                    log_message INFO "INFO : create SecBench PDB $SB_SECBENCH_DB from $SB_SEED_DB"
+                    create_pdb $SB_SEED_DB $SB_SECBENCH_DB
                 fi
-            elif prepared_enabled; then
-                echo "INFO : SecBench PDB $SB_SECBENCH_DB prepared. No setup performed"
             else
-                echo "INFO : create SecBench PDB $SB_SECBENCH_DB from $SB_SEED_DB"
+                log_message INFO "INFO : recreate SecBench PDB $SB_SECBENCH_DB from $SB_SEED_DB"
+                drop_pdb $SB_SECBENCH_DB
                 create_pdb $SB_SEED_DB $SB_SECBENCH_DB
             fi
+
+            if pdb_exists $SB_SECBENCH_DB && ! prepared_enabled; then
+                log_message INFO "INFO : prepare and setup configuration for $bench"
+                $SB_CONF_DIR/$bench/$SB_SETUP $SB_SECBENCH_DB $SB_OUTPUT_DIR
+            elif prepared_enabled; then
+                log_message INFO "INFO : SecBench PDB $SB_SECBENCH_DB prepared. No setup performed"
+            elif dryrun_enabled; then
+                log_message INFO "INFO : Dry run enabled, skip $SB_SETUP for $bench in $SB_SECBENCH_DB"
+            else
+                exit_with_status 40 $SB_SECBENCH_DB
+            fi
+
+            for uc in $SB_INTERVAL; do
+                log_message INFO "INFO : [$bench] - $uc ------------------------------------------------------------------------"
+                log_message INFO "INFO : [$bench] create AWR snapshot in $SB_SECBENCH_DB"
+                create_awr_snapshot $SB_SECBENCH_DB
+
+                log_message INFO "INFO : [$bench] start charbench at $(date "+%H:%M:%S") for $SB_RUNTIME with $uc concurrent users"
+                run_charbench $bench $uc
+                
+                log_message INFO "INFO : [$bench] create AWR snapshot in $SB_SECBENCH_DB"
+                create_awr_snapshot $SB_SECBENCH_DB
+
+                log_message INFO "INFO : [$bench] create AWR report for $SB_SECBENCH_DB $bench $uc"
+                create_awr_report "$SB_SECBENCH_DB" "$bench" "$uc"
+            done
+
+            if pdb_exists $SB_SECBENCH_DB; then
+                log_message INFO "INFO : remove configuration for $bench"
+                $SB_CONF_DIR/$bench/$SB_REMOVE $SB_SECBENCH_DB $SB_OUTPUT_DIR
+            elif dryrun_enabled; then
+                log_message INFO "INFO : Dry run enabled, skip $SB_REMOVE for $bench in $SB_SECBENCH_DB"
+            else
+                exit_with_status 40 $SB_SECBENCH_DB
+            fi
         else
-            echo "INFO : recreate SecBench PDB $SB_SECBENCH_DB from $SB_SEED_DB"
-            drop_pdb $SB_SECBENCH_DB
-            create_pdb $SB_SEED_DB $SB_SECBENCH_DB
+            log_message "WARN" "WARN : Cannot find benchmark config folder or missing executable scripts for benchmark ${bench}"
         fi
-
-        if pdb_exists $SB_SECBENCH_DB && ! prepared_enabled; then
-            echo "INFO : prepare and setup configuration for $bench"
-            $SB_CONF_DIR/$bench/$SB_SETUP $SB_SECBENCH_DB $SB_OUTPUT_DIR
-        elif prepared_enabled; then
-            echo "INFO : SecBench PDB $SB_SECBENCH_DB prepared. No setup performed"
-        elif dryrun_enabled; then
-            echo "INFO : Dry run enabled, skip $SB_SETUP for $bench in $SB_SECBENCH_DB"
-        else
-            clean_quit 40 $SB_SECBENCH_DB
-        fi
-
-        for uc in $SB_INTERVAL; do
-            echo "INFO : [$bench] - $uc ------------------------------------------------------------------------"
-            echo "INFO : [$bench] create AWR snapshot in $SB_SECBENCH_DB"
-            create_awr_snapshot $SB_SECBENCH_DB
-
-            echo "INFO : [$bench] start charbench at $(date "+%H:%M:%S") for $SB_RUNTIME with $uc concurrent users"
-            run_charbench $bench $uc
-            
-            echo "INFO : [$bench] create AWR snapshot in $SB_SECBENCH_DB"
-            create_awr_snapshot $SB_SECBENCH_DB
-
-            echo "INFO : [$bench] create AWR report for $SB_SECBENCH_DB $bench $uc"
-            create_awr_report "$SB_SECBENCH_DB" "$bench" "$uc"
-        done
-
-        if pdb_exists $SB_SECBENCH_DB; then
-            echo "INFO : remove configuration for $bench"
-            $SB_CONF_DIR/$bench/$SB_REMOVE $SB_SECBENCH_DB $SB_OUTPUT_DIR
-        elif dryrun_enabled; then
-            echo "INFO : Dry run enabled, skip $SB_REMOVE for $bench in $SB_SECBENCH_DB"
-        else
-            clean_quit 40 $SB_SECBENCH_DB
-        fi
-    else
-        echo_warn "WARN : can not find benchmark config folder "
-        echo_warn "WARN : skip benchmark $bench"
-    fi
-done
-
-clean_quit 0                                # we are done, successfully quit
+    done
+else
+    exit_with_status 41 $SB_SEED_DB
+fi
+exit_with_status 0                                # we are done, successfully quit
 # --- EOF ----------------------------------------------------------------------

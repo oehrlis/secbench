@@ -5,13 +5,20 @@
 # Name.......: sb_seed_drop.sh
 # Author.....: Stefan Oehrli (oes) stefan.oehrli@oradba.com
 # Editor.....: Stefan Oehrli
-# Date.......: 2023.05.19
+# Date.......: 2023.11.15
 # Revision...: 
 # Purpose....: Script to drop the seed database of OraDBA SecBench
 # Notes......: --
 # Reference..: https://github.com/oehrlis/secbench
-# License....: Apache License Version 2.0, January 2004 as shown
-#              at http://www.apache.org/licenses/
+# License....: Licensed under the Apache License, Version 2.0 (the "License");
+#              you may not use this file except in compliance with the License.
+#              You may obtain a copy of the License at
+#              http://www.apache.org/licenses/LICENSE-2.0
+#              Unless required by applicable law or agreed to in writing, software
+#              distributed under the License is distributed on an "AS IS" BASIS,
+#              WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#              See the License for the specific language governing permissions and
+#              limitations under the License.
 # ------------------------------------------------------------------------------
 # - Customization --------------------------------------------------------------
 DEFAULT_SEED_DB="sbpdb_seed"          # default name for the SecBench seed database
@@ -74,7 +81,7 @@ $((get_list_of_config && echo "Command line parameter")|cat -b)
 
 EOI
     dump_runtime_config     # dump current tool specific environment in debug mode
-    clean_quit ${error} ${error_value}  
+    exit_with_status ${error} ${error_value}  
 }
 # - EOF Functions --------------------------------------------------------------
 
@@ -86,15 +93,15 @@ set -o errexit      # Exit immediately if a pipeline, a list or a compound comma
 set -o pipefail     # pipefail exit after 1st piped commands failed
 
 # initialize logfile
-touch $LOGFILE 2>/dev/null
-exec &> >(tee -a "$LOGFILE")                # Open standard out at `$LOG_FILE` for write.  
+touch "$LOGFILE" 2>/dev/null
+exec &> >(tee -a "$LOGFILE")                # Log standard output and error
 exec 2>&1  
 
 echo "INFO : Start $SB_SCRIPT_NAME on host $(hostname) at $(date)"
 
 # source common variables and functions from sb_functions.sh
-if [ -f ${SB_BIN_DIR}/sb_functions.sh ]; then
-    . ${SB_BIN_DIR}/sb_functions.sh
+if [ -f "${SB_BIN_DIR}/sb_functions.sh" ]; then
+    . "${SB_BIN_DIR}/sb_functions.sh"
 else
     echo "ERROR: Can not find common functions ${SB_BIN_DIR}/sb_functions.sh"
     exit 5
@@ -108,21 +115,22 @@ check_tools             # check if we do have the required tools available
 dump_runtime_config     # dump current tool specific environment in debug mode
 
 # get options
-while getopts hvdS:nFE: CurOpt; do
-    case ${CurOpt} in
+while getopts "hvqdf:S:nE:" CurOpt; do
+    case "${CurOpt}" in
         h) Usage 0;;
-        v) TVDLDAP_VERBOSE="TRUE" ;;
-        d) TVDLDAP_DEBUG="TRUE" ;;
+        v) VERBOSE=1;;
+        d) DEBUG=1 && VERBOSE=1;;
+        q) QUIET=1 && VERBOSE='' && DEBUG='' ;;
+        f) SB_FORCE="TRUE";; 
         S) SB_SEED_DB="${OPTARG}";;
-        F) SB_FORCE="TRUE";; 
         n) SB_DRYRUN="TRUE";; 
-        E) clean_quit "${OPTARG}";;
-        *) Usage 2 $*;;
+        E) exit_with_status "${OPTARG}";;
+        *) Usage 2 "$*";;
     esac
 done
 
 # display usage and exit if parameter is null
-if [ $# -eq 0 ]; then
+if [[ $# -eq 0 ]]; then
    Usage 1
 fi
 
@@ -130,43 +138,55 @@ fi
 export SB_SEED_DB=${SB_SEED_DB:-""}
 
 # check for Service and Arguments
-if [ -z "$SB_SEED_DB" ] && [ $# -ne 0 ]; then
+if [[ -z "${SB_SEED_DB}" ]] && [[ $# -ne 0 ]]; then
     if [[ "$1" =~ ^-.*  ]]; then
-        SB_SEED_DB=${DEFAULT_SEED_DB:-""}  # default service to ORACLE_SID if Argument starting with dash 
+        SB_SEED_DB="${DEFAULT_SEED_DB:-""}"  # default service to ORACLE_SID if Argument starts with a dash 
     else
-        SB_SEED_DB=$1           # default service to Argument if not starting with dash
+        SB_SEED_DB="$1"                      # default service to Argument if not starting with a dash
     fi
 fi
 
 # check for mandatory parameters
-if [ -z "${SB_SEED_DB}" ]; then clean_quit 3 "-S"; fi
+if [[ -z "${SB_SEED_DB}" ]]; then exit_with_status 3 "-S"; fi
+
+# List of required SQL files
+required_files=(
+    "sb_secbench_drop_pdb.sql"
+)
+
+# Loop through each required file and check for its existence
+for file in "${required_files[@]}"; do
+    if [[ ! -f "${SB_SQL_DIR}/${file}" ]]; then
+        exit_with_status 22 "${SB_SQL_DIR}/${file}"
+    fi
+done
 # - EOF Initialization ---------------------------------------------------------
 
 # - Main -----------------------------------------------------------------------
-echo_warn "INFO : Proceed PDB $SB_SEED_DB in current Oracle environment $ORACLE_SID"
+log_message WARN "WARN : Proceed PDB $SB_SEED_DB in current Oracle environment $ORACLE_SID"
 # Stuff to be checked
 # - if SID is an oracle database and if it is availabe
 
 set +o errexit                              # temporary disable errexit
 if pdb_exists; then
-    echo_warn "INFO : Drop PDB $SB_SEED_DB including datafiles"
+    log_message WARN "WARN : Drop PDB $SB_SEED_DB including datafiles"
     if force_enabled; then
         drop_pdb $SB_SEED_DB
     else
         while true; do
-            read -p "INFO : Do you realy want to remove $SB_SEED_DB? (y/n): " yn
+            read -p "WARN : Do you realy want to remove $SB_SEED_DB? (y/n): " yn
             case $yn in 
-                [yY] )  echo "INFO : OK, lets proceed and drop $SB_SEED_DB";
+                [yY] )  log_message INFO "INFO : OK, lets proceed and drop $SB_SEED_DB";
                         break;;
-                [nN] )  echo "INFO : stop $SB_SCRIPT_NAME" ;
-                        clean_quit 0;;
-                * )     echo_warn "WARN : invalid response";;
+                [nN] )  log_message INFO "INFO : stop $SB_SCRIPT_NAME" ;
+                        exit_with_status 0;;
+                * )     log_message WARN "WARN : invalid response";;
             esac
         done
             drop_pdb $SB_SEED_DB
     fi
 else
-    clean_quit 41 $SB_SEED_DB
+    exit_with_status 41 $SB_SEED_DB
 fi
-clean_quit 0                                # we are done, successfully quit
+exit_with_status 0                                # we are done, successfully quit
 # --- EOF ----------------------------------------------------------------------

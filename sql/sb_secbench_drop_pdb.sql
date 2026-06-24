@@ -40,7 +40,7 @@ BEGIN
 
   DBMS_OUTPUT.put('- close &pdb_name.......: ');
   BEGIN
-    EXECUTE IMMEDIATE 'ALTER PLUGGABLE DATABASE &pdb_name CLOSE';
+    EXECUTE IMMEDIATE 'ALTER PLUGGABLE DATABASE &pdb_name CLOSE IMMEDIATE';
     DBMS_OUTPUT.put_line('closed');
   EXCEPTION
     WHEN e_pdb_notexist THEN
